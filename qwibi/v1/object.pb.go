@@ -26,7 +26,7 @@ const (
 
 // ObjectAudience scopes one object inside an otherwise readable layer. Durable
 // private channels remain private layers; this field is for small, ephemeral
-// recipient sets in a shared layer (ADR-0017).
+// recipient sets in a shared layer.
 type ObjectAudience int32
 
 const (
@@ -40,6 +40,10 @@ const (
 	ObjectAudience_OBJECT_AUDIENCE_DIRECT ObjectAudience = 3
 	// Visible to the author plus layer owners and editors.
 	ObjectAudience_OBJECT_AUDIENCE_ROLE ObjectAudience = 4
+	// App data containers only: visible to the author (the App), the holders of
+	// the member roles named in audience_roles, and the members in audience_ids.
+	// A member role grants reading only. Layers refuse it; containers refuse ROLE.
+	ObjectAudience_OBJECT_AUDIENCE_MEMBER_ROLE ObjectAudience = 5
 )
 
 // Enum value maps for ObjectAudience.
@@ -50,6 +54,7 @@ var (
 		2: "OBJECT_AUDIENCE_AUTHOR",
 		3: "OBJECT_AUDIENCE_DIRECT",
 		4: "OBJECT_AUDIENCE_ROLE",
+		5: "OBJECT_AUDIENCE_MEMBER_ROLE",
 	}
 	ObjectAudience_value = map[string]int32{
 		"OBJECT_AUDIENCE_UNSPECIFIED": 0,
@@ -57,6 +62,7 @@ var (
 		"OBJECT_AUDIENCE_AUTHOR":      2,
 		"OBJECT_AUDIENCE_DIRECT":      3,
 		"OBJECT_AUDIENCE_ROLE":        4,
+		"OBJECT_AUDIENCE_MEMBER_ROLE": 5,
 	}
 )
 
@@ -228,7 +234,7 @@ type GeoObject struct {
 	// ObjectWrite.ttl_seconds) and reserved as a rendering input in v0: clients
 	// observe deletion and do not apply an independent render timer today.
 	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	// State-plane checkpoint stamp of `geometry` for kind=position (ADR-0022):
+	// State-plane checkpoint stamp of `geometry` for kind=position:
 	// the (owner_epoch, seq) pair the stored geometry was last flushed at. Clients
 	// that subscribed with state_kinds seed their per-object position gate from
 	// this value at snapshot/read time and then apply only strictly newer
@@ -237,12 +243,16 @@ type GeoObject struct {
 	// Immutable delivery scope stamped by the server from ObjectWrite.audience.
 	// UNSPECIFIED is public for backward compatibility.
 	Audience ObjectAudience `protobuf:"varint,23,opt,name=audience,proto3,enum=qwibi.v1.ObjectAudience" json:"audience,omitempty"`
-	// Canonically sorted direct recipient account UUIDs. Server-owned.
+	// Canonically sorted recipient account UUIDs (DIRECT, or the members a
+	// MEMBER_ROLE object is addressed to). Server-owned.
 	AudienceIds []string `protobuf:"bytes,24,rep,name=audience_ids,json=audienceIds,proto3" json:"audience_ids,omitempty"`
 	// Server-owned immutable producer identity and latest mutation audit.
 	Provenance *Provenance `protobuf:"bytes,25,opt,name=provenance,proto3" json:"provenance,omitempty"`
 	// Private Layer media attached transactionally to this Object.
-	LayerBlobIds  []string `protobuf:"bytes,26,rep,name=layer_blob_ids,json=layerBlobIds,proto3" json:"layer_blob_ids,omitempty"`
+	LayerBlobIds []string `protobuf:"bytes,26,rep,name=layer_blob_ids,json=layerBlobIds,proto3" json:"layer_blob_ids,omitempty"`
+	// Canonically sorted member role ids of the App's release that may read a
+	// MEMBER_ROLE object. Empty for every other audience. Server-owned.
+	AudienceRoles []string `protobuf:"bytes,27,rep,name=audience_roles,json=audienceRoles,proto3" json:"audience_roles,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -445,6 +455,13 @@ func (x *GeoObject) GetLayerBlobIds() []string {
 	return nil
 }
 
+func (x *GeoObject) GetAudienceRoles() []string {
+	if x != nil {
+		return x.AudienceRoles
+	}
+	return nil
+}
+
 // ObjectWrite is the mutable subset of a GeoObject accepted on create/update.
 // Server-owned fields (uid, provenance, timestamps) are excluded so they
 // cannot be spoofed by clients; the layer is named by the enclosing request.
@@ -483,7 +500,16 @@ type ObjectWrite struct {
 	// values. The server normalizes their order before persistence.
 	AudienceIds []string `protobuf:"bytes,16,rep,name=audience_ids,json=audienceIds,proto3" json:"audience_ids,omitempty"`
 	// Exact private Layer media references to attach in the Object transaction.
-	LayerBlobIds  []string `protobuf:"bytes,17,rep,name=layer_blob_ids,json=layerBlobIds,proto3" json:"layer_blob_ids,omitempty"`
+	LayerBlobIds []string `protobuf:"bytes,17,rep,name=layer_blob_ids,json=layerBlobIds,proto3" json:"layer_blob_ids,omitempty"`
+	// Member role ids of the App's current release that may read the object.
+	// Valid only with MEMBER_ROLE, in an App data container; immutable like the
+	// audience. The server normalizes their order.
+	AudienceRoles []string `protobuf:"bytes,18,rep,name=audience_roles,json=audienceRoles,proto3" json:"audience_roles,omitempty"`
+	// The members a MEMBER_ROLE object is addressed to, named without an account
+	// id. Private App data only; the platform resolves each to a member and
+	// stores it in audience_ids, which an App never reads or writes. Every
+	// recipient that cannot be resolved is refused with one and the same error.
+	Recipients    []*ObjectRecipient `protobuf:"bytes,19,rep,name=recipients,proto3" json:"recipients,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -630,6 +656,90 @@ func (x *ObjectWrite) GetLayerBlobIds() []string {
 	return nil
 }
 
+func (x *ObjectWrite) GetAudienceRoles() []string {
+	if x != nil {
+		return x.AudienceRoles
+	}
+	return nil
+}
+
+func (x *ObjectWrite) GetRecipients() []*ObjectRecipient {
+	if x != nil {
+		return x.Recipients
+	}
+	return nil
+}
+
+// ObjectRecipient names one member of a private App without an account id.
+type ObjectRecipient struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Who:
+	//
+	//	*ObjectRecipient_InvocationId
+	Who           isObjectRecipient_Who `protobuf_oneof:"who"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ObjectRecipient) Reset() {
+	*x = ObjectRecipient{}
+	mi := &file_qwibi_v1_object_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ObjectRecipient) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ObjectRecipient) ProtoMessage() {}
+
+func (x *ObjectRecipient) ProtoReflect() protoreflect.Message {
+	mi := &file_qwibi_v1_object_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ObjectRecipient.ProtoReflect.Descriptor instead.
+func (*ObjectRecipient) Descriptor() ([]byte, []int) {
+	return file_qwibi_v1_object_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ObjectRecipient) GetWho() isObjectRecipient_Who {
+	if x != nil {
+		return x.Who
+	}
+	return nil
+}
+
+func (x *ObjectRecipient) GetInvocationId() string {
+	if x != nil {
+		if x, ok := x.Who.(*ObjectRecipient_InvocationId); ok {
+			return x.InvocationId
+		}
+	}
+	return ""
+}
+
+type isObjectRecipient_Who interface {
+	isObjectRecipient_Who()
+}
+
+type ObjectRecipient_InvocationId struct {
+	// The member who made this invocation of the App, while its record is
+	// kept: 30 days for a contributing or managing call, until shortly after
+	// the deadline for an observing one.
+	InvocationId string `protobuf:"bytes,1,opt,name=invocation_id,json=invocationId,proto3,oneof"`
+}
+
+func (*ObjectRecipient_InvocationId) isObjectRecipient_Who() {}
+
 var File_qwibi_v1_object_proto protoreflect.FileDescriptor
 
 const file_qwibi_v1_object_proto_rawDesc = "" +
@@ -641,7 +751,7 @@ const file_qwibi_v1_object_proto_rawDesc = "" +
 	"\n" +
 	"properties\x18\x03 \x01(\v2\x17.google.protobuf.StructR\n" +
 	"properties\x12\x1f\n" +
-	"\x05style\x18\x04 \x01(\tB\t\xbaH\x06r\x04\x18\x80\x80\x01R\x05style\"\xc7\f\n" +
+	"\x05style\x18\x04 \x01(\tB\t\xbaH\x06r\x04\x18\x80\x80\x01R\x05style\"\x97\r\n" +
 	"\tGeoObject\x12Z\n" +
 	"\x03uid\x18\x01 \x01(\tBH\xbaHErC2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\x98\x01$R\x03uid\x12c\n" +
 	"\blayer_id\x18\x02 \x01(\tBH\xbaHErC2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\x98\x01$R\alayerId\x126\n" +
@@ -676,8 +786,9 @@ const file_qwibi_v1_object_proto_rawDesc = "" +
 	"\n" +
 	"provenance\x18\x19 \x01(\v2\x14.qwibi.v1.ProvenanceB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"provenance\x12\x8b\x01\n" +
-	"\x0elayer_blob_ids\x18\x1a \x03(\tBe\xbaHb\x92\x01_\x10@\x18\x01\"YrW2R^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}-[0-9a-f]{32}$\x98\x01ER\flayerBlobIds:\xcf\x01\xbaH\xcb\x01\x1a\xc8\x01\n" +
-	"\x12geo_object.creator\x12Ncreator_principal_id may be absent only for a platform-produced durable record\x1abthis.provenance.producer.producer_kind == 2 || this.provenance.producer.creator_principal_id != ''J\x04\b\x03\x10\x04J\x04\b\x15\x10\x16R\tauthor_idR\x06result\"\xda\a\n" +
+	"\x0elayer_blob_ids\x18\x1a \x03(\tBe\xbaHb\x92\x01_\x10@\x18\x01\"YrW2R^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}-[0-9a-f]{32}$\x98\x01ER\flayerBlobIds\x12N\n" +
+	"\x0eaudience_roles\x18\x1b \x03(\tB'\xbaH$\x92\x01!\x10\x10\x18\x01\"\x1br\x192\x17^[a-z][a-z0-9_-]{0,63}$R\raudienceRoles:\xcf\x01\xbaH\xcb\x01\x1a\xc8\x01\n" +
+	"\x12geo_object.creator\x12Ncreator_principal_id may be absent only for a platform-produced durable record\x1abthis.provenance.producer.producer_kind == 2 || this.provenance.producer.creator_principal_id != ''J\x04\b\x03\x10\x04J\x04\b\x15\x10\x16R\tauthor_idR\x06result\"\xef\b\n" +
 	"\vObjectWrite\x126\n" +
 	"\bgeometry\x18\x01 \x01(\v2\x12.qwibi.v1.GeometryB\x06\xbaH\x03\xc8\x01\x01R\bgeometry\x12-\n" +
 	"\bfeatures\x18\x02 \x03(\v2\x11.qwibi.v1.FeatureR\bfeatures\x127\n" +
@@ -700,16 +811,24 @@ const file_qwibi_v1_object_proto_rawDesc = "" +
 	"ttlSeconds\x129\n" +
 	"\baudience\x18\x0f \x01(\x0e2\x18.qwibi.v1.ObjectAudienceH\x02R\baudience\x88\x01\x01\x12o\n" +
 	"\faudience_ids\x18\x10 \x03(\tBL\xbaHI\x92\x01F\x10\x10\"Br@2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$R\vaudienceIds\x12\x8b\x01\n" +
-	"\x0elayer_blob_ids\x18\x11 \x03(\tBe\xbaHb\x92\x01_\x10@\x18\x01\"YrW2R^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}-[0-9a-f]{32}$\x98\x01ER\flayerBlobIdsB\x10\n" +
+	"\x0elayer_blob_ids\x18\x11 \x03(\tBe\xbaHb\x92\x01_\x10@\x18\x01\"YrW2R^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}-[0-9a-f]{32}$\x98\x01ER\flayerBlobIds\x12N\n" +
+	"\x0eaudience_roles\x18\x12 \x03(\tB'\xbaH$\x92\x01!\x10\x10\x18\x01\"\x1br\x192\x17^[a-z][a-z0-9_-]{0,63}$R\raudienceRoles\x12C\n" +
+	"\n" +
+	"recipients\x18\x13 \x03(\v2\x19.qwibi.v1.ObjectRecipientB\b\xbaH\x05\x92\x01\x02\x10\x10R\n" +
+	"recipientsB\x10\n" +
 	"\x0e_is_selectableB\r\n" +
 	"\v_is_visibleB\v\n" +
-	"\t_audienceJ\x04\b\x0e\x10\x0fR\x06result*\x9f\x01\n" +
+	"\t_audienceJ\x04\b\x0e\x10\x0fR\x06result\"I\n" +
+	"\x0fObjectRecipient\x12/\n" +
+	"\rinvocation_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\finvocationIdB\x05\n" +
+	"\x03who*\xc0\x01\n" +
 	"\x0eObjectAudience\x12\x1f\n" +
 	"\x1bOBJECT_AUDIENCE_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16OBJECT_AUDIENCE_PUBLIC\x10\x01\x12\x1a\n" +
 	"\x16OBJECT_AUDIENCE_AUTHOR\x10\x02\x12\x1a\n" +
 	"\x16OBJECT_AUDIENCE_DIRECT\x10\x03\x12\x18\n" +
-	"\x14OBJECT_AUDIENCE_ROLE\x10\x04B\x8e\x01\n" +
+	"\x14OBJECT_AUDIENCE_ROLE\x10\x04\x12\x1f\n" +
+	"\x1bOBJECT_AUDIENCE_MEMBER_ROLE\x10\x05B\x8e\x01\n" +
 	"\fcom.qwibi.v1B\vObjectProtoP\x01Z0github.com/qwibi/qwibi-proto-go/qwibi/v1;qwibiv1\xa2\x02\x03QXX\xaa\x02\bQwibi.V1\xca\x02\bQwibi\\V1\xe2\x02\x14Qwibi\\V1\\GPBMetadata\xea\x02\tQwibi::V1b\x06proto3"
 
 var (
@@ -725,41 +844,43 @@ func file_qwibi_v1_object_proto_rawDescGZIP() []byte {
 }
 
 var file_qwibi_v1_object_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_qwibi_v1_object_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_qwibi_v1_object_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_qwibi_v1_object_proto_goTypes = []any{
 	(ObjectAudience)(0),           // 0: qwibi.v1.ObjectAudience
 	(*Feature)(nil),               // 1: qwibi.v1.Feature
 	(*GeoObject)(nil),             // 2: qwibi.v1.GeoObject
 	(*ObjectWrite)(nil),           // 3: qwibi.v1.ObjectWrite
-	(*Geometry)(nil),              // 4: qwibi.v1.Geometry
-	(*structpb.Struct)(nil),       // 5: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
-	(GeometryType)(0),             // 7: qwibi.v1.GeometryType
-	(*StateVersion)(nil),          // 8: qwibi.v1.StateVersion
-	(*Provenance)(nil),            // 9: qwibi.v1.Provenance
+	(*ObjectRecipient)(nil),       // 4: qwibi.v1.ObjectRecipient
+	(*Geometry)(nil),              // 5: qwibi.v1.Geometry
+	(*structpb.Struct)(nil),       // 6: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(GeometryType)(0),             // 8: qwibi.v1.GeometryType
+	(*StateVersion)(nil),          // 9: qwibi.v1.StateVersion
+	(*Provenance)(nil),            // 10: qwibi.v1.Provenance
 }
 var file_qwibi_v1_object_proto_depIdxs = []int32{
-	4,  // 0: qwibi.v1.Feature.geometry:type_name -> qwibi.v1.Geometry
-	5,  // 1: qwibi.v1.Feature.properties:type_name -> google.protobuf.Struct
-	4,  // 2: qwibi.v1.GeoObject.geometry:type_name -> qwibi.v1.Geometry
+	5,  // 0: qwibi.v1.Feature.geometry:type_name -> qwibi.v1.Geometry
+	6,  // 1: qwibi.v1.Feature.properties:type_name -> google.protobuf.Struct
+	5,  // 2: qwibi.v1.GeoObject.geometry:type_name -> qwibi.v1.Geometry
 	1,  // 3: qwibi.v1.GeoObject.features:type_name -> qwibi.v1.Feature
-	5,  // 4: qwibi.v1.GeoObject.properties:type_name -> google.protobuf.Struct
-	6,  // 5: qwibi.v1.GeoObject.created_at:type_name -> google.protobuf.Timestamp
-	6,  // 6: qwibi.v1.GeoObject.updated_at:type_name -> google.protobuf.Timestamp
-	7,  // 7: qwibi.v1.GeoObject.gtype:type_name -> qwibi.v1.GeometryType
-	6,  // 8: qwibi.v1.GeoObject.expires_at:type_name -> google.protobuf.Timestamp
-	8,  // 9: qwibi.v1.GeoObject.position_version:type_name -> qwibi.v1.StateVersion
+	6,  // 4: qwibi.v1.GeoObject.properties:type_name -> google.protobuf.Struct
+	7,  // 5: qwibi.v1.GeoObject.created_at:type_name -> google.protobuf.Timestamp
+	7,  // 6: qwibi.v1.GeoObject.updated_at:type_name -> google.protobuf.Timestamp
+	8,  // 7: qwibi.v1.GeoObject.gtype:type_name -> qwibi.v1.GeometryType
+	7,  // 8: qwibi.v1.GeoObject.expires_at:type_name -> google.protobuf.Timestamp
+	9,  // 9: qwibi.v1.GeoObject.position_version:type_name -> qwibi.v1.StateVersion
 	0,  // 10: qwibi.v1.GeoObject.audience:type_name -> qwibi.v1.ObjectAudience
-	9,  // 11: qwibi.v1.GeoObject.provenance:type_name -> qwibi.v1.Provenance
-	4,  // 12: qwibi.v1.ObjectWrite.geometry:type_name -> qwibi.v1.Geometry
+	10, // 11: qwibi.v1.GeoObject.provenance:type_name -> qwibi.v1.Provenance
+	5,  // 12: qwibi.v1.ObjectWrite.geometry:type_name -> qwibi.v1.Geometry
 	1,  // 13: qwibi.v1.ObjectWrite.features:type_name -> qwibi.v1.Feature
-	5,  // 14: qwibi.v1.ObjectWrite.properties:type_name -> google.protobuf.Struct
+	6,  // 14: qwibi.v1.ObjectWrite.properties:type_name -> google.protobuf.Struct
 	0,  // 15: qwibi.v1.ObjectWrite.audience:type_name -> qwibi.v1.ObjectAudience
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	4,  // 16: qwibi.v1.ObjectWrite.recipients:type_name -> qwibi.v1.ObjectRecipient
+	17, // [17:17] is the sub-list for method output_type
+	17, // [17:17] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_qwibi_v1_object_proto_init() }
@@ -771,13 +892,16 @@ func file_qwibi_v1_object_proto_init() {
 	file_qwibi_v1_geometry_proto_init()
 	file_qwibi_v1_provenance_proto_init()
 	file_qwibi_v1_object_proto_msgTypes[2].OneofWrappers = []any{}
+	file_qwibi_v1_object_proto_msgTypes[3].OneofWrappers = []any{
+		(*ObjectRecipient_InvocationId)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_qwibi_v1_object_proto_rawDesc), len(file_qwibi_v1_object_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

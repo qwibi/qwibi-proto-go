@@ -86,8 +86,11 @@ type AppMember struct {
 	DisplayName string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	// The link the member joined through; empty for a member admitted by the
 	// platform (the publisher who created or narrowed the App).
-	InviteLinkId  string                 `protobuf:"bytes,3,opt,name=invite_link_id,json=inviteLinkId,proto3" json:"invite_link_id,omitempty"`
-	JoinedAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=joined_at,json=joinedAt,proto3" json:"joined_at,omitempty"`
+	InviteLinkId string                 `protobuf:"bytes,3,opt,name=invite_link_id,json=inviteLinkId,proto3" json:"invite_link_id,omitempty"`
+	JoinedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=joined_at,json=joinedAt,proto3" json:"joined_at,omitempty"`
+	// The member role the member holds, one of the current release's
+	// member_roles, or empty for none.
+	RoleId        string `protobuf:"bytes,5,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -148,6 +151,13 @@ func (x *AppMember) GetJoinedAt() *timestamppb.Timestamp {
 		return x.JoinedAt
 	}
 	return nil
+}
+
+func (x *AppMember) GetRoleId() string {
+	if x != nil {
+		return x.RoleId
+	}
+	return ""
 }
 
 // AppInviteLink is an invitation anyone holding its token may use once each.
@@ -657,6 +667,111 @@ func (x *RevokeAppInviteLinkResponse) GetLink() *AppInviteLink {
 	return nil
 }
 
+type SetAppMemberRoleRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	AppId     string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	AccountId string                 `protobuf:"bytes,2,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	// A role the current release declares, or empty to take the role away.
+	RoleId        string `protobuf:"bytes,3,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetAppMemberRoleRequest) Reset() {
+	*x = SetAppMemberRoleRequest{}
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetAppMemberRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAppMemberRoleRequest) ProtoMessage() {}
+
+func (x *SetAppMemberRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAppMemberRoleRequest.ProtoReflect.Descriptor instead.
+func (*SetAppMemberRoleRequest) Descriptor() ([]byte, []int) {
+	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SetAppMemberRoleRequest) GetAppId() string {
+	if x != nil {
+		return x.AppId
+	}
+	return ""
+}
+
+func (x *SetAppMemberRoleRequest) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *SetAppMemberRoleRequest) GetRoleId() string {
+	if x != nil {
+		return x.RoleId
+	}
+	return ""
+}
+
+type SetAppMemberRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Member        *AppMember             `protobuf:"bytes,1,opt,name=member,proto3" json:"member,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetAppMemberRoleResponse) Reset() {
+	*x = SetAppMemberRoleResponse{}
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetAppMemberRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAppMemberRoleResponse) ProtoMessage() {}
+
+func (x *SetAppMemberRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAppMemberRoleResponse.ProtoReflect.Descriptor instead.
+func (*SetAppMemberRoleResponse) Descriptor() ([]byte, []int) {
+	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *SetAppMemberRoleResponse) GetMember() *AppMember {
+	if x != nil {
+		return x.Member
+	}
+	return nil
+}
+
 type RemoveAppMemberRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
@@ -667,7 +782,7 @@ type RemoveAppMemberRequest struct {
 
 func (x *RemoveAppMemberRequest) Reset() {
 	*x = RemoveAppMemberRequest{}
-	mi := &file_qwibi_v1_app_member_proto_msgTypes[10]
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -679,7 +794,7 @@ func (x *RemoveAppMemberRequest) String() string {
 func (*RemoveAppMemberRequest) ProtoMessage() {}
 
 func (x *RemoveAppMemberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_qwibi_v1_app_member_proto_msgTypes[10]
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -692,7 +807,7 @@ func (x *RemoveAppMemberRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveAppMemberRequest.ProtoReflect.Descriptor instead.
 func (*RemoveAppMemberRequest) Descriptor() ([]byte, []int) {
-	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{10}
+	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RemoveAppMemberRequest) GetAppId() string {
@@ -717,7 +832,7 @@ type RemoveAppMemberResponse struct {
 
 func (x *RemoveAppMemberResponse) Reset() {
 	*x = RemoveAppMemberResponse{}
-	mi := &file_qwibi_v1_app_member_proto_msgTypes[11]
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -729,7 +844,7 @@ func (x *RemoveAppMemberResponse) String() string {
 func (*RemoveAppMemberResponse) ProtoMessage() {}
 
 func (x *RemoveAppMemberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_qwibi_v1_app_member_proto_msgTypes[11]
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -742,7 +857,7 @@ func (x *RemoveAppMemberResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveAppMemberResponse.ProtoReflect.Descriptor instead.
 func (*RemoveAppMemberResponse) Descriptor() ([]byte, []int) {
-	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{11}
+	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{13}
 }
 
 type JoinAppRequest struct {
@@ -754,7 +869,7 @@ type JoinAppRequest struct {
 
 func (x *JoinAppRequest) Reset() {
 	*x = JoinAppRequest{}
-	mi := &file_qwibi_v1_app_member_proto_msgTypes[12]
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -766,7 +881,7 @@ func (x *JoinAppRequest) String() string {
 func (*JoinAppRequest) ProtoMessage() {}
 
 func (x *JoinAppRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_qwibi_v1_app_member_proto_msgTypes[12]
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -779,7 +894,7 @@ func (x *JoinAppRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinAppRequest.ProtoReflect.Descriptor instead.
 func (*JoinAppRequest) Descriptor() ([]byte, []int) {
-	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{12}
+	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *JoinAppRequest) GetInviteToken() string {
@@ -798,7 +913,7 @@ type JoinAppResponse struct {
 
 func (x *JoinAppResponse) Reset() {
 	*x = JoinAppResponse{}
-	mi := &file_qwibi_v1_app_member_proto_msgTypes[13]
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -810,7 +925,7 @@ func (x *JoinAppResponse) String() string {
 func (*JoinAppResponse) ProtoMessage() {}
 
 func (x *JoinAppResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_qwibi_v1_app_member_proto_msgTypes[13]
+	mi := &file_qwibi_v1_app_member_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -823,7 +938,7 @@ func (x *JoinAppResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinAppResponse.ProtoReflect.Descriptor instead.
 func (*JoinAppResponse) Descriptor() ([]byte, []int) {
-	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{13}
+	return file_qwibi_v1_app_member_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *JoinAppResponse) GetApp() *GeoApp {
@@ -837,13 +952,14 @@ var File_qwibi_v1_app_member_proto protoreflect.FileDescriptor
 
 const file_qwibi_v1_app_member_proto_rawDesc = "" +
 	"\n" +
-	"\x19qwibi/v1/app_member.proto\x12\bqwibi.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12qwibi/v1/app.proto\x1a\x1bqwibi/v1/auth_options.proto\x1a\x15qwibi/v1/common.proto\"\xb6\x01\n" +
+	"\x19qwibi/v1/app_member.proto\x12\bqwibi.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12qwibi/v1/app.proto\x1a\x1bqwibi/v1/auth_options.proto\x1a\x15qwibi/v1/common.proto\"\xcf\x01\n" +
 	"\tAppMember\x12'\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\taccountId\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12$\n" +
 	"\x0einvite_link_id\x18\x03 \x01(\tR\finviteLinkId\x127\n" +
-	"\tjoined_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bjoinedAt\"\xf0\x02\n" +
+	"\tjoined_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bjoinedAt\x12\x17\n" +
+	"\arole_id\x18\x05 \x01(\tR\x06roleId\"\xf0\x02\n" +
 	"\rAppInviteLink\x12!\n" +
 	"\alink_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06linkId\x12\x1f\n" +
 	"\x06app_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x05appId\x129\n" +
@@ -878,7 +994,14 @@ const file_qwibi_v1_app_member_proto_rawDesc = "" +
 	"\x06app_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x05appId\x12!\n" +
 	"\alink_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06linkId\"J\n" +
 	"\x1bRevokeAppInviteLinkResponse\x12+\n" +
-	"\x04link\x18\x01 \x01(\v2\x17.qwibi.v1.AppInviteLinkR\x04link\"b\n" +
+	"\x04link\x18\x01 \x01(\v2\x17.qwibi.v1.AppInviteLinkR\x04link\"\xa1\x01\n" +
+	"\x17SetAppMemberRoleRequest\x12\x1f\n" +
+	"\x06app_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x05appId\x12'\n" +
+	"\n" +
+	"account_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\taccountId\x12<\n" +
+	"\arole_id\x18\x03 \x01(\tB#\xbaH r\x1e\x18@2\x1a^$|^[a-z][a-z0-9_-]{0,63}$R\x06roleId\"G\n" +
+	"\x18SetAppMemberRoleResponse\x12+\n" +
+	"\x06member\x18\x01 \x01(\v2\x13.qwibi.v1.AppMemberR\x06member\"b\n" +
 	"\x16RemoveAppMemberRequest\x12\x1f\n" +
 	"\x06app_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x05appId\x12'\n" +
 	"\n" +
@@ -894,12 +1017,13 @@ const file_qwibi_v1_app_member_proto_rawDesc = "" +
 	"\x1cAPP_INVITE_LINK_STATE_ACTIVE\x10\x01\x12!\n" +
 	"\x1dAPP_INVITE_LINK_STATE_EXPIRED\x10\x02\x12#\n" +
 	"\x1fAPP_INVITE_LINK_STATE_EXHAUSTED\x10\x03\x12!\n" +
-	"\x1dAPP_INVITE_LINK_STATE_REVOKED\x10\x042\xcc\x04\n" +
+	"\x1dAPP_INVITE_LINK_STATE_REVOKED\x10\x042\xad\x05\n" +
 	"\x10AppMemberService\x12Y\n" +
 	"\x0eListAppMembers\x12\x1f.qwibi.v1.ListAppMembersRequest\x1a .qwibi.v1.ListAppMembersResponse\"\x04\x88\xb5\x18\x03\x12h\n" +
 	"\x13CreateAppInviteLink\x12$.qwibi.v1.CreateAppInviteLinkRequest\x1a%.qwibi.v1.CreateAppInviteLinkResponse\"\x04\x88\xb5\x18\x03\x12e\n" +
 	"\x12ListAppInviteLinks\x12#.qwibi.v1.ListAppInviteLinksRequest\x1a$.qwibi.v1.ListAppInviteLinksResponse\"\x04\x88\xb5\x18\x03\x12h\n" +
-	"\x13RevokeAppInviteLink\x12$.qwibi.v1.RevokeAppInviteLinkRequest\x1a%.qwibi.v1.RevokeAppInviteLinkResponse\"\x04\x88\xb5\x18\x03\x12\\\n" +
+	"\x13RevokeAppInviteLink\x12$.qwibi.v1.RevokeAppInviteLinkRequest\x1a%.qwibi.v1.RevokeAppInviteLinkResponse\"\x04\x88\xb5\x18\x03\x12_\n" +
+	"\x10SetAppMemberRole\x12!.qwibi.v1.SetAppMemberRoleRequest\x1a\".qwibi.v1.SetAppMemberRoleResponse\"\x04\x88\xb5\x18\x03\x12\\\n" +
 	"\x0fRemoveAppMember\x12 .qwibi.v1.RemoveAppMemberRequest\x1a!.qwibi.v1.RemoveAppMemberResponse\"\x04\x88\xb5\x18\x03\x12D\n" +
 	"\aJoinApp\x12\x18.qwibi.v1.JoinAppRequest\x1a\x19.qwibi.v1.JoinAppResponse\"\x04\x88\xb5\x18\x03B\x91\x01\n" +
 	"\fcom.qwibi.v1B\x0eAppMemberProtoP\x01Z0github.com/qwibi/qwibi-proto-go/qwibi/v1;qwibiv1\xa2\x02\x03QXX\xaa\x02\bQwibi.V1\xca\x02\bQwibi\\V1\xe2\x02\x14Qwibi\\V1\\GPBMetadata\xea\x02\tQwibi::V1b\x06proto3"
@@ -917,7 +1041,7 @@ func file_qwibi_v1_app_member_proto_rawDescGZIP() []byte {
 }
 
 var file_qwibi_v1_app_member_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_qwibi_v1_app_member_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_qwibi_v1_app_member_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_qwibi_v1_app_member_proto_goTypes = []any{
 	(AppInviteLinkState)(0),             // 0: qwibi.v1.AppInviteLinkState
 	(*AppMember)(nil),                   // 1: qwibi.v1.AppMember
@@ -930,46 +1054,51 @@ var file_qwibi_v1_app_member_proto_goTypes = []any{
 	(*ListAppInviteLinksResponse)(nil),  // 8: qwibi.v1.ListAppInviteLinksResponse
 	(*RevokeAppInviteLinkRequest)(nil),  // 9: qwibi.v1.RevokeAppInviteLinkRequest
 	(*RevokeAppInviteLinkResponse)(nil), // 10: qwibi.v1.RevokeAppInviteLinkResponse
-	(*RemoveAppMemberRequest)(nil),      // 11: qwibi.v1.RemoveAppMemberRequest
-	(*RemoveAppMemberResponse)(nil),     // 12: qwibi.v1.RemoveAppMemberResponse
-	(*JoinAppRequest)(nil),              // 13: qwibi.v1.JoinAppRequest
-	(*JoinAppResponse)(nil),             // 14: qwibi.v1.JoinAppResponse
-	(*timestamppb.Timestamp)(nil),       // 15: google.protobuf.Timestamp
-	(*PageRequest)(nil),                 // 16: qwibi.v1.PageRequest
-	(*PageResponse)(nil),                // 17: qwibi.v1.PageResponse
-	(*GeoApp)(nil),                      // 18: qwibi.v1.GeoApp
+	(*SetAppMemberRoleRequest)(nil),     // 11: qwibi.v1.SetAppMemberRoleRequest
+	(*SetAppMemberRoleResponse)(nil),    // 12: qwibi.v1.SetAppMemberRoleResponse
+	(*RemoveAppMemberRequest)(nil),      // 13: qwibi.v1.RemoveAppMemberRequest
+	(*RemoveAppMemberResponse)(nil),     // 14: qwibi.v1.RemoveAppMemberResponse
+	(*JoinAppRequest)(nil),              // 15: qwibi.v1.JoinAppRequest
+	(*JoinAppResponse)(nil),             // 16: qwibi.v1.JoinAppResponse
+	(*timestamppb.Timestamp)(nil),       // 17: google.protobuf.Timestamp
+	(*PageRequest)(nil),                 // 18: qwibi.v1.PageRequest
+	(*PageResponse)(nil),                // 19: qwibi.v1.PageResponse
+	(*GeoApp)(nil),                      // 20: qwibi.v1.GeoApp
 }
 var file_qwibi_v1_app_member_proto_depIdxs = []int32{
-	15, // 0: qwibi.v1.AppMember.joined_at:type_name -> google.protobuf.Timestamp
-	15, // 1: qwibi.v1.AppInviteLink.created_at:type_name -> google.protobuf.Timestamp
-	15, // 2: qwibi.v1.AppInviteLink.expires_at:type_name -> google.protobuf.Timestamp
-	15, // 3: qwibi.v1.AppInviteLink.revoked_at:type_name -> google.protobuf.Timestamp
+	17, // 0: qwibi.v1.AppMember.joined_at:type_name -> google.protobuf.Timestamp
+	17, // 1: qwibi.v1.AppInviteLink.created_at:type_name -> google.protobuf.Timestamp
+	17, // 2: qwibi.v1.AppInviteLink.expires_at:type_name -> google.protobuf.Timestamp
+	17, // 3: qwibi.v1.AppInviteLink.revoked_at:type_name -> google.protobuf.Timestamp
 	0,  // 4: qwibi.v1.AppInviteLink.state:type_name -> qwibi.v1.AppInviteLinkState
-	16, // 5: qwibi.v1.ListAppMembersRequest.page:type_name -> qwibi.v1.PageRequest
+	18, // 5: qwibi.v1.ListAppMembersRequest.page:type_name -> qwibi.v1.PageRequest
 	1,  // 6: qwibi.v1.ListAppMembersResponse.members:type_name -> qwibi.v1.AppMember
-	17, // 7: qwibi.v1.ListAppMembersResponse.page:type_name -> qwibi.v1.PageResponse
-	15, // 8: qwibi.v1.CreateAppInviteLinkRequest.expires_at:type_name -> google.protobuf.Timestamp
+	19, // 7: qwibi.v1.ListAppMembersResponse.page:type_name -> qwibi.v1.PageResponse
+	17, // 8: qwibi.v1.CreateAppInviteLinkRequest.expires_at:type_name -> google.protobuf.Timestamp
 	2,  // 9: qwibi.v1.CreateAppInviteLinkResponse.link:type_name -> qwibi.v1.AppInviteLink
 	2,  // 10: qwibi.v1.ListAppInviteLinksResponse.links:type_name -> qwibi.v1.AppInviteLink
 	2,  // 11: qwibi.v1.RevokeAppInviteLinkResponse.link:type_name -> qwibi.v1.AppInviteLink
-	18, // 12: qwibi.v1.JoinAppResponse.app:type_name -> qwibi.v1.GeoApp
-	3,  // 13: qwibi.v1.AppMemberService.ListAppMembers:input_type -> qwibi.v1.ListAppMembersRequest
-	5,  // 14: qwibi.v1.AppMemberService.CreateAppInviteLink:input_type -> qwibi.v1.CreateAppInviteLinkRequest
-	7,  // 15: qwibi.v1.AppMemberService.ListAppInviteLinks:input_type -> qwibi.v1.ListAppInviteLinksRequest
-	9,  // 16: qwibi.v1.AppMemberService.RevokeAppInviteLink:input_type -> qwibi.v1.RevokeAppInviteLinkRequest
-	11, // 17: qwibi.v1.AppMemberService.RemoveAppMember:input_type -> qwibi.v1.RemoveAppMemberRequest
-	13, // 18: qwibi.v1.AppMemberService.JoinApp:input_type -> qwibi.v1.JoinAppRequest
-	4,  // 19: qwibi.v1.AppMemberService.ListAppMembers:output_type -> qwibi.v1.ListAppMembersResponse
-	6,  // 20: qwibi.v1.AppMemberService.CreateAppInviteLink:output_type -> qwibi.v1.CreateAppInviteLinkResponse
-	8,  // 21: qwibi.v1.AppMemberService.ListAppInviteLinks:output_type -> qwibi.v1.ListAppInviteLinksResponse
-	10, // 22: qwibi.v1.AppMemberService.RevokeAppInviteLink:output_type -> qwibi.v1.RevokeAppInviteLinkResponse
-	12, // 23: qwibi.v1.AppMemberService.RemoveAppMember:output_type -> qwibi.v1.RemoveAppMemberResponse
-	14, // 24: qwibi.v1.AppMemberService.JoinApp:output_type -> qwibi.v1.JoinAppResponse
-	19, // [19:25] is the sub-list for method output_type
-	13, // [13:19] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	1,  // 12: qwibi.v1.SetAppMemberRoleResponse.member:type_name -> qwibi.v1.AppMember
+	20, // 13: qwibi.v1.JoinAppResponse.app:type_name -> qwibi.v1.GeoApp
+	3,  // 14: qwibi.v1.AppMemberService.ListAppMembers:input_type -> qwibi.v1.ListAppMembersRequest
+	5,  // 15: qwibi.v1.AppMemberService.CreateAppInviteLink:input_type -> qwibi.v1.CreateAppInviteLinkRequest
+	7,  // 16: qwibi.v1.AppMemberService.ListAppInviteLinks:input_type -> qwibi.v1.ListAppInviteLinksRequest
+	9,  // 17: qwibi.v1.AppMemberService.RevokeAppInviteLink:input_type -> qwibi.v1.RevokeAppInviteLinkRequest
+	11, // 18: qwibi.v1.AppMemberService.SetAppMemberRole:input_type -> qwibi.v1.SetAppMemberRoleRequest
+	13, // 19: qwibi.v1.AppMemberService.RemoveAppMember:input_type -> qwibi.v1.RemoveAppMemberRequest
+	15, // 20: qwibi.v1.AppMemberService.JoinApp:input_type -> qwibi.v1.JoinAppRequest
+	4,  // 21: qwibi.v1.AppMemberService.ListAppMembers:output_type -> qwibi.v1.ListAppMembersResponse
+	6,  // 22: qwibi.v1.AppMemberService.CreateAppInviteLink:output_type -> qwibi.v1.CreateAppInviteLinkResponse
+	8,  // 23: qwibi.v1.AppMemberService.ListAppInviteLinks:output_type -> qwibi.v1.ListAppInviteLinksResponse
+	10, // 24: qwibi.v1.AppMemberService.RevokeAppInviteLink:output_type -> qwibi.v1.RevokeAppInviteLinkResponse
+	12, // 25: qwibi.v1.AppMemberService.SetAppMemberRole:output_type -> qwibi.v1.SetAppMemberRoleResponse
+	14, // 26: qwibi.v1.AppMemberService.RemoveAppMember:output_type -> qwibi.v1.RemoveAppMemberResponse
+	16, // 27: qwibi.v1.AppMemberService.JoinApp:output_type -> qwibi.v1.JoinAppResponse
+	21, // [21:28] is the sub-list for method output_type
+	14, // [14:21] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_qwibi_v1_app_member_proto_init() }
@@ -986,7 +1115,7 @@ func file_qwibi_v1_app_member_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_qwibi_v1_app_member_proto_rawDesc), len(file_qwibi_v1_app_member_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

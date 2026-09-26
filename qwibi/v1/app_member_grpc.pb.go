@@ -23,6 +23,7 @@ const (
 	AppMemberService_CreateAppInviteLink_FullMethodName = "/qwibi.v1.AppMemberService/CreateAppInviteLink"
 	AppMemberService_ListAppInviteLinks_FullMethodName  = "/qwibi.v1.AppMemberService/ListAppInviteLinks"
 	AppMemberService_RevokeAppInviteLink_FullMethodName = "/qwibi.v1.AppMemberService/RevokeAppInviteLink"
+	AppMemberService_SetAppMemberRole_FullMethodName    = "/qwibi.v1.AppMemberService/SetAppMemberRole"
 	AppMemberService_RemoveAppMember_FullMethodName     = "/qwibi.v1.AppMemberService/RemoveAppMember"
 	AppMemberService_JoinApp_FullMethodName             = "/qwibi.v1.AppMemberService/JoinApp"
 )
@@ -37,7 +38,11 @@ type AppMemberServiceClient interface {
 	ListAppInviteLinks(ctx context.Context, in *ListAppInviteLinksRequest, opts ...grpc.CallOption) (*ListAppInviteLinksResponse, error)
 	// Revoking stops new joins; members who joined through the link stay.
 	RevokeAppInviteLink(ctx context.Context, in *RevokeAppInviteLinkRequest, opts ...grpc.CallOption) (*RevokeAppInviteLinkResponse, error)
-	// Removing a member closes their open streams of the App's data.
+	// Changing a member's role closes their open streams of the App's data; a
+	// role grants reading only.
+	SetAppMemberRole(ctx context.Context, in *SetAppMemberRoleRequest, opts ...grpc.CallOption) (*SetAppMemberRoleResponse, error)
+	// Removing a member closes their open streams of the App's data, ends their
+	// open calls and withholds their kept answers.
 	RemoveAppMember(ctx context.Context, in *RemoveAppMemberRequest, opts ...grpc.CallOption) (*RemoveAppMemberResponse, error)
 	// A person with a confirmed email joins a private App through a live link.
 	JoinApp(ctx context.Context, in *JoinAppRequest, opts ...grpc.CallOption) (*JoinAppResponse, error)
@@ -91,6 +96,16 @@ func (c *appMemberServiceClient) RevokeAppInviteLink(ctx context.Context, in *Re
 	return out, nil
 }
 
+func (c *appMemberServiceClient) SetAppMemberRole(ctx context.Context, in *SetAppMemberRoleRequest, opts ...grpc.CallOption) (*SetAppMemberRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetAppMemberRoleResponse)
+	err := c.cc.Invoke(ctx, AppMemberService_SetAppMemberRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appMemberServiceClient) RemoveAppMember(ctx context.Context, in *RemoveAppMemberRequest, opts ...grpc.CallOption) (*RemoveAppMemberResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RemoveAppMemberResponse)
@@ -121,7 +136,11 @@ type AppMemberServiceServer interface {
 	ListAppInviteLinks(context.Context, *ListAppInviteLinksRequest) (*ListAppInviteLinksResponse, error)
 	// Revoking stops new joins; members who joined through the link stay.
 	RevokeAppInviteLink(context.Context, *RevokeAppInviteLinkRequest) (*RevokeAppInviteLinkResponse, error)
-	// Removing a member closes their open streams of the App's data.
+	// Changing a member's role closes their open streams of the App's data; a
+	// role grants reading only.
+	SetAppMemberRole(context.Context, *SetAppMemberRoleRequest) (*SetAppMemberRoleResponse, error)
+	// Removing a member closes their open streams of the App's data, ends their
+	// open calls and withholds their kept answers.
 	RemoveAppMember(context.Context, *RemoveAppMemberRequest) (*RemoveAppMemberResponse, error)
 	// A person with a confirmed email joins a private App through a live link.
 	JoinApp(context.Context, *JoinAppRequest) (*JoinAppResponse, error)
@@ -145,6 +164,9 @@ func (UnimplementedAppMemberServiceServer) ListAppInviteLinks(context.Context, *
 }
 func (UnimplementedAppMemberServiceServer) RevokeAppInviteLink(context.Context, *RevokeAppInviteLinkRequest) (*RevokeAppInviteLinkResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RevokeAppInviteLink not implemented")
+}
+func (UnimplementedAppMemberServiceServer) SetAppMemberRole(context.Context, *SetAppMemberRoleRequest) (*SetAppMemberRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetAppMemberRole not implemented")
 }
 func (UnimplementedAppMemberServiceServer) RemoveAppMember(context.Context, *RemoveAppMemberRequest) (*RemoveAppMemberResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveAppMember not implemented")
@@ -244,6 +266,24 @@ func _AppMemberService_RevokeAppInviteLink_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AppMemberService_SetAppMemberRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetAppMemberRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppMemberServiceServer).SetAppMemberRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AppMemberService_SetAppMemberRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppMemberServiceServer).SetAppMemberRole(ctx, req.(*SetAppMemberRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AppMemberService_RemoveAppMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveAppMemberRequest)
 	if err := dec(in); err != nil {
@@ -302,6 +342,10 @@ var AppMemberService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RevokeAppInviteLink",
 			Handler:    _AppMemberService_RevokeAppInviteLink_Handler,
+		},
+		{
+			MethodName: "SetAppMemberRole",
+			Handler:    _AppMemberService_SetAppMemberRole_Handler,
 		},
 		{
 			MethodName: "RemoveAppMember",

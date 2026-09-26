@@ -542,7 +542,7 @@ func (x *ErrorDetail) GetTraceId() string {
 	return ""
 }
 
-// StateVersion orders one state-plane cell (ADR-0022 / INV-20): the pair
+// StateVersion orders one state-plane cell: the pair
 // (owner_epoch, seq), compared lexicographically. `owner_epoch` is the owning
 // shard's lease fencing counter (bumped on every ownership acquisition, so a new
 // owner tenure supersedes everything older without replay); `seq` increments per

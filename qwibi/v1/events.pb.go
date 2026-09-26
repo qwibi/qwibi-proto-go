@@ -1054,7 +1054,7 @@ func (x *AggregateUpdated) GetCell() *AggregateCell {
 	return nil
 }
 
-// StateEvent carries one state-plane cell update (ADR-0022 / INV-20): keyed
+// StateEvent carries one state-plane cell update: keyed
 // last-write-wins state — movement first (kind="position", key = object uid).
 // State events are cursorless (ServerEvent.seq stays 0, no resume cursor) and
 // delivery-incomplete by contract: any intermediate tick may be superseded
@@ -1065,7 +1065,7 @@ type StateEvent struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	LayerId string                 `protobuf:"bytes,1,opt,name=layer_id,json=layerId,proto3" json:"layer_id,omitempty"`
 	// State channel kind. v0: "position" (value = geometry). Semantics-free
-	// discriminator string per INV-7.
+	// discriminator string.
 	Kind string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	// Cell key within (layer, kind). For kind="position" this is the object uid.
 	Key string `protobuf:"bytes,3,opt,name=key,proto3" json:"key,omitempty"`
@@ -1202,7 +1202,7 @@ type StateEvent_Position struct {
 }
 
 type StateEvent_Opaque struct {
-	// Future kinds: opaque, size-capped payload (INV-7 extensibility seam).
+	// Future kinds: opaque, size-capped payload.
 	Opaque []byte `protobuf:"bytes,5,opt,name=opaque,proto3,oneof"`
 }
 
@@ -2078,7 +2078,7 @@ type ServerEvent_LayerDeleted struct {
 }
 
 type ServerEvent_StateEvent struct {
-	// State plane (ADR-0022): delivered only when the subscription opted in via
+	// State plane: delivered only when the subscription opted in via
 	// SubscribeOptions.state_kinds. Cursorless (seq = 0, no cursor).
 	StateEvent *StateEvent `protobuf:"bytes,23,opt,name=state_event,json=stateEvent,proto3,oneof"`
 }

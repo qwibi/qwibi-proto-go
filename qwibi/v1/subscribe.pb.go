@@ -99,10 +99,10 @@ type SubscribeOptions struct {
 	// (ClusterSnapshot + AggregateUpdated) instead of individual objects. Intended
 	// for zoomed-out views of dense layers, where a per-object feed is a firehose.
 	Aggregate bool `protobuf:"varint,4,opt,name=aggregate,proto3" json:"aggregate,omitempty"`
-	// State-plane opt-in (ADR-0022): which state channel kinds to deliver as
+	// State-plane opt-in: which state channel kinds to deliver as
 	// StateEvent/StateClear alongside the ledger events. Empty = none (default,
 	// pre-2c behavior). Unknown kinds are rejected INVALID_ARGUMENT — never
-	// silently ignored (INV-10). Honored by both Subscribe and StreamLayer.
+	// silently ignored. Honored by both Subscribe and StreamLayer.
 	// v0 implements exactly "position".
 	StateKinds []string `protobuf:"bytes,5,rep,name=state_kinds,json=stateKinds,proto3" json:"state_kinds,omitempty"`
 	// Optional aggregate projection scope. Empty preserves the layer-wide
@@ -386,9 +386,13 @@ type GetSnapshotResponse struct {
 	// The caller's role on this layer when the snapshot was opened, or
 	// MEMBER_ROLE_UNSPECIFIED for a readable public layer without membership.
 	// Gateways use this immutable per-open fact for OBJECT_AUDIENCE_ROLE.
-	CallerRole    MemberRole `protobuf:"varint,7,opt,name=caller_role,json=callerRole,proto3,enum=qwibi.v1.MemberRole" json:"caller_role,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	CallerRole MemberRole `protobuf:"varint,7,opt,name=caller_role,json=callerRole,proto3,enum=qwibi.v1.MemberRole" json:"caller_role,omitempty"`
+	// The caller's member role in an App data container when the snapshot was
+	// opened, or empty. Gateways use this immutable per-open fact for
+	// OBJECT_AUDIENCE_MEMBER_ROLE; a role change closes the stream.
+	ContainerRoleId string `protobuf:"bytes,8,opt,name=container_role_id,json=containerRoleId,proto3" json:"container_role_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *GetSnapshotResponse) Reset() {
@@ -468,6 +472,13 @@ func (x *GetSnapshotResponse) GetCallerRole() MemberRole {
 		return x.CallerRole
 	}
 	return MemberRole_MEMBER_ROLE_UNSPECIFIED
+}
+
+func (x *GetSnapshotResponse) GetContainerRoleId() string {
+	if x != nil {
+		return x.ContainerRoleId
+	}
+	return ""
 }
 
 // PresencePing is a client-originated presence signal carried on a
@@ -822,7 +833,7 @@ const file_qwibi_v1_subscribe_proto_rawDesc = "" +
 	"\bapp_data\x18\x04 \x01(\v2\x17.qwibi.v1.AppDataSourceR\aappData\x126\n" +
 	"\bviewport\x18\x02 \x01(\v2\x12.qwibi.v1.ViewportB\x06\xbaH\x03\xc8\x01\x01R\bviewport\x12)\n" +
 	"\vpage_cursor\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x18\x80 R\n" +
-	"pageCursor\"\xf7\x03\n" +
+	"pageCursor\"\xa3\x04\n" +
 	"\x13GetSnapshotResponse\x126\n" +
 	"\bsnapshot\x18\x01 \x01(\v2\x12.qwibi.v1.SnapshotB\x06\xbaH\x03\xc8\x01\x01R\bsnapshot\x12-\n" +
 	"\x06replay\x18\x02 \x03(\v2\x15.qwibi.v1.ServerEventR\x06replay\x12!\n" +
@@ -832,7 +843,8 @@ const file_qwibi_v1_subscribe_proto_rawDesc = "" +
 	"\x13excluded_author_ids\x18\x05 \x03(\tBO\xbaHL\x92\x01I\x10\xe8\a\x18\x01\"Br@2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$R\x11excludedAuthorIds\x12\x7f\n" +
 	"\x13blocked_account_ids\x18\x06 \x03(\tBO\xbaHL\x92\x01I\x10\xe8\a\x18\x01\"Br@2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$R\x11blockedAccountIds\x125\n" +
 	"\vcaller_role\x18\a \x01(\x0e2\x14.qwibi.v1.MemberRoleR\n" +
-	"callerRole\"V\n" +
+	"callerRole\x12*\n" +
+	"\x11container_role_id\x18\b \x01(\tR\x0fcontainerRoleId\"V\n" +
 	"\fPresencePing\x12\x16\n" +
 	"\x06typing\x18\x01 \x01(\bR\x06typing\x12.\n" +
 	"\bposition\x18\x02 \x01(\v2\x12.qwibi.v1.PositionR\bposition\"\xb6\x01\n" +
