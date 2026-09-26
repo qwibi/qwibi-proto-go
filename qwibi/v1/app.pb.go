@@ -83,6 +83,72 @@ func (AppLifecycleState) EnumDescriptor() ([]byte, []int) {
 	return file_qwibi_v1_app_proto_rawDescGZIP(), []int{0}
 }
 
+// AppAccessLevel says who may use an App and read its App data. It supersedes
+// the former public flag and is carried by the visibility of the App's data
+// container: a public or by-link App's container is readable by anyone, a
+// private App's container only by its members.
+//
+//	PUBLIC  — anyone; listed in the catalogue.
+//	BY_LINK — anyone who reaches it by its address; never in the catalogue.
+//	          The address is obscurity, not secrecy.
+//	PRIVATE — only its members (people who joined through an invite link);
+//	          absent for everyone else on every map where it is added.
+//
+// A creation that leaves the level unspecified follows the deprecated public
+// flag, so a client built before the level keeps its meaning: public creates a
+// PUBLIC App, otherwise a PRIVATE App.
+type AppAccessLevel int32
+
+const (
+	AppAccessLevel_APP_ACCESS_LEVEL_UNSPECIFIED AppAccessLevel = 0
+	AppAccessLevel_APP_ACCESS_LEVEL_PUBLIC      AppAccessLevel = 1
+	AppAccessLevel_APP_ACCESS_LEVEL_BY_LINK     AppAccessLevel = 2
+	AppAccessLevel_APP_ACCESS_LEVEL_PRIVATE     AppAccessLevel = 3
+)
+
+// Enum value maps for AppAccessLevel.
+var (
+	AppAccessLevel_name = map[int32]string{
+		0: "APP_ACCESS_LEVEL_UNSPECIFIED",
+		1: "APP_ACCESS_LEVEL_PUBLIC",
+		2: "APP_ACCESS_LEVEL_BY_LINK",
+		3: "APP_ACCESS_LEVEL_PRIVATE",
+	}
+	AppAccessLevel_value = map[string]int32{
+		"APP_ACCESS_LEVEL_UNSPECIFIED": 0,
+		"APP_ACCESS_LEVEL_PUBLIC":      1,
+		"APP_ACCESS_LEVEL_BY_LINK":     2,
+		"APP_ACCESS_LEVEL_PRIVATE":     3,
+	}
+)
+
+func (x AppAccessLevel) Enum() *AppAccessLevel {
+	p := new(AppAccessLevel)
+	*p = x
+	return p
+}
+
+func (x AppAccessLevel) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AppAccessLevel) Descriptor() protoreflect.EnumDescriptor {
+	return file_qwibi_v1_app_proto_enumTypes[1].Descriptor()
+}
+
+func (AppAccessLevel) Type() protoreflect.EnumType {
+	return &file_qwibi_v1_app_proto_enumTypes[1]
+}
+
+func (x AppAccessLevel) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AppAccessLevel.Descriptor instead.
+func (AppAccessLevel) EnumDescriptor() ([]byte, []int) {
+	return file_qwibi_v1_app_proto_rawDescGZIP(), []int{1}
+}
+
 // AppPublisherPermission is the closed vocabulary of explicit human authority
 // on one App. No permission implies another; PUBLISHER_ADMIN manages only these
 // grant rows.
@@ -128,11 +194,11 @@ func (x AppPublisherPermission) String() string {
 }
 
 func (AppPublisherPermission) Descriptor() protoreflect.EnumDescriptor {
-	return file_qwibi_v1_app_proto_enumTypes[1].Descriptor()
+	return file_qwibi_v1_app_proto_enumTypes[2].Descriptor()
 }
 
 func (AppPublisherPermission) Type() protoreflect.EnumType {
-	return &file_qwibi_v1_app_proto_enumTypes[1]
+	return &file_qwibi_v1_app_proto_enumTypes[2]
 }
 
 func (x AppPublisherPermission) Number() protoreflect.EnumNumber {
@@ -141,7 +207,7 @@ func (x AppPublisherPermission) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AppPublisherPermission.Descriptor instead.
 func (AppPublisherPermission) EnumDescriptor() ([]byte, []int) {
-	return file_qwibi_v1_app_proto_rawDescGZIP(), []int{1}
+	return file_qwibi_v1_app_proto_rawDescGZIP(), []int{2}
 }
 
 // GeoApp is a stable non-human application identity published by one
@@ -158,8 +224,10 @@ type GeoApp struct {
 	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
 	// Public id of the owning account.
 	OwnerId string `protobuf:"bytes,5,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
-	// Whether the app is world-readable and discoverable in catalog/search. When
-	// false the app is private (members only). Default false.
+	// Deprecated: use access_level. Kept for clients built before it: true
+	// exactly when access_level is PUBLIC; a BY_LINK or PRIVATE App reads false.
+	//
+	// Deprecated: Marked as deprecated in qwibi/v1/app.proto.
 	Public    bool                   `protobuf:"varint,6,opt,name=public,proto3" json:"public,omitempty"`
 	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
@@ -179,7 +247,9 @@ type GeoApp struct {
 	// and any future suspend or resume transition.
 	LifecycleRevision uint64 `protobuf:"varint,18,opt,name=lifecycle_revision,json=lifecycleRevision,proto3" json:"lifecycle_revision,omitempty"`
 	// Set only for the terminal RETIRED state.
-	RetiredAt     *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=retired_at,json=retiredAt,proto3" json:"retired_at,omitempty"`
+	RetiredAt *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=retired_at,json=retiredAt,proto3" json:"retired_at,omitempty"`
+	// Who may use the App and read its App data; see AppAccessLevel.
+	AccessLevel   AppAccessLevel `protobuf:"varint,21,opt,name=access_level,json=accessLevel,proto3,enum=qwibi.v1.AppAccessLevel" json:"access_level,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -249,6 +319,7 @@ func (x *GeoApp) GetOwnerId() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in qwibi/v1/app.proto.
 func (x *GeoApp) GetPublic() bool {
 	if x != nil {
 		return x.Public
@@ -326,6 +397,13 @@ func (x *GeoApp) GetRetiredAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *GeoApp) GetAccessLevel() AppAccessLevel {
+	if x != nil {
+		return x.AccessLevel
+	}
+	return AppAccessLevel_APP_ACCESS_LEVEL_UNSPECIFIED
+}
+
 // CreateAppRequest registers a new app under an organization. The authenticated
 // caller must be an owner/admin of that org; anonymous callers are rejected.
 type CreateAppRequest struct {
@@ -334,7 +412,11 @@ type CreateAppRequest struct {
 	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// Optional desired handle; must be globally unique if provided.
 	Hid string `protobuf:"bytes,3,opt,name=hid,proto3" json:"hid,omitempty"`
-	// World-readable + discoverable when true; private (members only) when false.
+	// Deprecated: use access_level. Honoured when access_level is UNSPECIFIED,
+	// as a client built before it sends: true creates a PUBLIC App, false a
+	// PRIVATE one.
+	//
+	// Deprecated: Marked as deprecated in qwibi/v1/app.proto.
 	Public bool `protobuf:"varint,4,opt,name=public,proto3" json:"public,omitempty"`
 	// The organization that will own the app. Optional: when empty the app is
 	// created under the caller's personal organization.
@@ -347,8 +429,12 @@ type CreateAppRequest struct {
 	// live human receives the initial publisher grants and creation accountability.
 	// A human caller must leave this field empty.
 	PublisherAdminAccountId string `protobuf:"bytes,11,opt,name=publisher_admin_account_id,json=publisherAdminAccountId,proto3" json:"publisher_admin_account_id,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// Who may use the App. UNSPECIFIED defers to the deprecated public flag:
+	// public creates a PUBLIC App, otherwise a PRIVATE App whose creating
+	// publisher is its first member.
+	AccessLevel   AppAccessLevel `protobuf:"varint,12,opt,name=access_level,json=accessLevel,proto3,enum=qwibi.v1.AppAccessLevel" json:"access_level,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateAppRequest) Reset() {
@@ -402,6 +488,7 @@ func (x *CreateAppRequest) GetHid() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in qwibi/v1/app.proto.
 func (x *CreateAppRequest) GetPublic() bool {
 	if x != nil {
 		return x.Public
@@ -442,6 +529,13 @@ func (x *CreateAppRequest) GetPublisherAdminAccountId() string {
 		return x.PublisherAdminAccountId
 	}
 	return ""
+}
+
+func (x *CreateAppRequest) GetAccessLevel() AppAccessLevel {
+	if x != nil {
+		return x.AccessLevel
+	}
+	return AppAccessLevel_APP_ACCESS_LEVEL_UNSPECIFIED
 }
 
 type CreateAppResponse struct {
@@ -774,13 +868,21 @@ type UpdateAppRequest struct {
 	AppId       string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
 	Name        *string                `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
 	Description *string                `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
-	Public      *bool                  `protobuf:"varint,4,opt,name=public,proto3,oneof" json:"public,omitempty"`
+	// Deprecated: use access_level. Honoured when access_level is absent: true
+	// makes the App PUBLIC, false PRIVATE.
+	//
+	// Deprecated: Marked as deprecated in qwibi/v1/app.proto.
+	Public *bool `protobuf:"varint,4,opt,name=public,proto3,oneof" json:"public,omitempty"`
 	// Set/rename the handle; an empty string clears it.
 	Hid *string `protobuf:"bytes,5,opt,name=hid,proto3,oneof" json:"hid,omitempty"`
 	// Optional catalog metadata (see GeoApp).
-	IconUrl       *string `protobuf:"bytes,6,opt,name=icon_url,json=iconUrl,proto3,oneof" json:"icon_url,omitempty"`
-	Category      *string `protobuf:"bytes,7,opt,name=category,proto3,oneof" json:"category,omitempty"`
-	CoverUrl      *string `protobuf:"bytes,8,opt,name=cover_url,json=coverUrl,proto3,oneof" json:"cover_url,omitempty"`
+	IconUrl  *string `protobuf:"bytes,6,opt,name=icon_url,json=iconUrl,proto3,oneof" json:"icon_url,omitempty"`
+	Category *string `protobuf:"bytes,7,opt,name=category,proto3,oneof" json:"category,omitempty"`
+	CoverUrl *string `protobuf:"bytes,8,opt,name=cover_url,json=coverUrl,proto3,oneof" json:"cover_url,omitempty"`
+	// Changes who may use the App. Narrowing to PRIVATE is refused while the
+	// current release declares an action that writes people's objects
+	// (executor PLATFORM), and it closes non-members' open App-data streams.
+	AccessLevel   *AppAccessLevel `protobuf:"varint,13,opt,name=access_level,json=accessLevel,proto3,enum=qwibi.v1.AppAccessLevel,oneof" json:"access_level,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -836,6 +938,7 @@ func (x *UpdateAppRequest) GetDescription() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in qwibi/v1/app.proto.
 func (x *UpdateAppRequest) GetPublic() bool {
 	if x != nil && x.Public != nil {
 		return *x.Public
@@ -869,6 +972,13 @@ func (x *UpdateAppRequest) GetCoverUrl() string {
 		return *x.CoverUrl
 	}
 	return ""
+}
+
+func (x *UpdateAppRequest) GetAccessLevel() AppAccessLevel {
+	if x != nil && x.AccessLevel != nil {
+		return *x.AccessLevel
+	}
+	return AppAccessLevel_APP_ACCESS_LEVEL_UNSPECIFIED
 }
 
 type UpdateAppResponse struct {
@@ -1913,15 +2023,15 @@ var File_qwibi_v1_app_proto protoreflect.FileDescriptor
 
 const file_qwibi_v1_app_proto_rawDesc = "" +
 	"\n" +
-	"\x12qwibi/v1/app.proto\x12\bqwibi.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15qwibi/v1/common.proto\"\xf7\a\n" +
+	"\x12qwibi/v1/app.proto\x12\bqwibi.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x15qwibi/v1/common.proto\"\xb8\b\n" +
 	"\x06GeoApp\x12Z\n" +
 	"\x03uid\x18\x01 \x01(\tBH\xbaHErC2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\x98\x01$R\x03uid\x126\n" +
 	"\x03hid\x18\x02 \x01(\tB$\xbaH!r\x1f2\x1d^$|^[a-z0-9][a-z0-9_-]{1,62}$R\x03hid\x12\x1e\n" +
 	"\x04name\x18\x03 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\x80\x02R\x04name\x12*\n" +
 	"\vdescription\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x18\x80 R\vdescription\x12c\n" +
-	"\bowner_id\x18\x05 \x01(\tBH\xbaHErC2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\x98\x01$R\aownerId\x12\x16\n" +
-	"\x06public\x18\x06 \x01(\bR\x06public\x129\n" +
+	"\bowner_id\x18\x05 \x01(\tBH\xbaHErC2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\x98\x01$R\aownerId\x12\x1a\n" +
+	"\x06public\x18\x06 \x01(\bB\x02\x18\x01R\x06public\x129\n" +
 	"\n" +
 	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
@@ -1935,18 +2045,20 @@ const file_qwibi_v1_app_proto_rawDesc = "" +
 	"\x0flifecycle_state\x18\x11 \x01(\x0e2\x1b.qwibi.v1.AppLifecycleStateR\x0elifecycleState\x12-\n" +
 	"\x12lifecycle_revision\x18\x12 \x01(\x04R\x11lifecycleRevision\x129\n" +
 	"\n" +
-	"retired_at\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\tretiredAtJ\x04\b\r\x10\x0eJ\x04\b\x0e\x10\x0fJ\x04\b\x0f\x10\x10J\x04\b\x10\x10\x11R\vlayer_countR\fmember_countR\bcommandsR\rlocalizations\"\xbf\x04\n" +
+	"retired_at\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\tretiredAt\x12;\n" +
+	"\faccess_level\x18\x15 \x01(\x0e2\x18.qwibi.v1.AppAccessLevelR\vaccessLevelJ\x04\b\r\x10\x0eJ\x04\b\x0e\x10\x0fJ\x04\b\x0f\x10\x10J\x04\b\x10\x10\x11R\vlayer_countR\fmember_countR\bcommandsR\rlocalizations\"\x8a\x05\n" +
 	"\x10CreateAppRequest\x12\x1e\n" +
 	"\x04name\x18\x01 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\x80\x02R\x04name\x12*\n" +
 	"\vdescription\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\x80 R\vdescription\x126\n" +
-	"\x03hid\x18\x03 \x01(\tB$\xbaH!r\x1f2\x1d^$|^[a-z0-9][a-z0-9_-]{1,62}$R\x03hid\x12\x16\n" +
-	"\x06public\x18\x04 \x01(\bR\x06public\x12q\n" +
+	"\x03hid\x18\x03 \x01(\tB$\xbaH!r\x1f2\x1d^$|^[a-z0-9][a-z0-9_-]{1,62}$R\x03hid\x12\x1a\n" +
+	"\x06public\x18\x04 \x01(\bB\x02\x18\x01R\x06public\x12q\n" +
 	"\x0forganization_id\x18\x05 \x01(\tBH\xbaHErC2A^$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$R\x0eorganizationId\x12#\n" +
 	"\bicon_url\x18\x06 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10R\aiconUrl\x12#\n" +
 	"\bcategory\x18\a \x01(\tB\a\xbaH\x04r\x02\x18@R\bcategory\x12%\n" +
 	"\tcover_url\x18\b \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10R\bcoverUrl\x12\x85\x01\n" +
-	"\x1apublisher_admin_account_id\x18\v \x01(\tBH\xbaHErC2A^$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$R\x17publisherAdminAccountIdJ\x04\b\t\x10\n" +
+	"\x1apublisher_admin_account_id\x18\v \x01(\tBH\xbaHErC2A^$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$R\x17publisherAdminAccountId\x12E\n" +
+	"\faccess_level\x18\f \x01(\x0e2\x18.qwibi.v1.AppAccessLevelB\b\xbaH\x05\x82\x01\x02\x10\x01R\vaccessLevelJ\x04\b\t\x10\n" +
 	"J\x04\b\n" +
 	"\x10\vR\bcommandsR\rlocalizations\"7\n" +
 	"\x11CreateAppResponse\x12\"\n" +
@@ -1964,16 +2076,18 @@ const file_qwibi_v1_app_proto_rawDesc = "" +
 	"\x03app\x18\x01 \x01(\v2\x10.qwibi.v1.GeoAppR\x03app\"s\n" +
 	"\x10DeleteAppRequest\x12_\n" +
 	"\x06app_id\x18\x01 \x01(\tBH\xbaHErC2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\x98\x01$R\x05appId\"\x13\n" +
-	"\x11DeleteAppResponse\"\xb9\x04\n" +
+	"\x11DeleteAppResponse\"\x9c\x05\n" +
 	"\x10UpdateAppRequest\x12_\n" +
 	"\x06app_id\x18\x01 \x01(\tBH\xbaHErC2>^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\x98\x01$R\x05appId\x12!\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x02H\x00R\x04name\x88\x01\x01\x12/\n" +
-	"\vdescription\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x18\x80 H\x01R\vdescription\x88\x01\x01\x12\x1b\n" +
-	"\x06public\x18\x04 \x01(\bH\x02R\x06public\x88\x01\x01\x12;\n" +
+	"\vdescription\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x18\x80 H\x01R\vdescription\x88\x01\x01\x12\x1f\n" +
+	"\x06public\x18\x04 \x01(\bB\x02\x18\x01H\x02R\x06public\x88\x01\x01\x12;\n" +
 	"\x03hid\x18\x05 \x01(\tB$\xbaH!r\x1f2\x1d^$|^[a-z0-9][a-z0-9_-]{1,62}$H\x03R\x03hid\x88\x01\x01\x12(\n" +
 	"\bicon_url\x18\x06 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10H\x04R\aiconUrl\x88\x01\x01\x12(\n" +
 	"\bcategory\x18\a \x01(\tB\a\xbaH\x04r\x02\x18@H\x05R\bcategory\x88\x01\x01\x12*\n" +
-	"\tcover_url\x18\b \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10H\x06R\bcoverUrl\x88\x01\x01B\a\n" +
+	"\tcover_url\x18\b \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10H\x06R\bcoverUrl\x88\x01\x01\x12L\n" +
+	"\faccess_level\x18\r \x01(\x0e2\x18.qwibi.v1.AppAccessLevelB\n" +
+	"\xbaH\a\x82\x01\x04\x10\x01 \x00H\aR\vaccessLevel\x88\x01\x01B\a\n" +
 	"\x05_nameB\x0e\n" +
 	"\f_descriptionB\t\n" +
 	"\a_publicB\x06\n" +
@@ -1981,7 +2095,8 @@ const file_qwibi_v1_app_proto_rawDesc = "" +
 	"\t_icon_urlB\v\n" +
 	"\t_categoryB\f\n" +
 	"\n" +
-	"_cover_urlJ\x04\b\t\x10\rR\bcommandsR\x0eclear_commandsR\rlocalizationsR\x13clear_localizations\"7\n" +
+	"_cover_urlB\x0f\n" +
+	"\r_access_levelJ\x04\b\t\x10\rR\bcommandsR\x0eclear_commandsR\rlocalizationsR\x13clear_localizations\"7\n" +
 	"\x11UpdateAppResponse\x12\"\n" +
 	"\x03app\x18\x01 \x01(\v2\x10.qwibi.v1.GeoAppR\x03app\"\xc2\x03\n" +
 	"\x11AppPublisherGrant\x12Z\n" +
@@ -2065,7 +2180,12 @@ const file_qwibi_v1_app_proto_rawDesc = "" +
 	"\x19APP_LIFECYCLE_STATE_DRAFT\x10\x01\x12!\n" +
 	"\x1dAPP_LIFECYCLE_STATE_PUBLISHED\x10\x02\x12!\n" +
 	"\x1dAPP_LIFECYCLE_STATE_SUSPENDED\x10\x03\x12\x1f\n" +
-	"\x1bAPP_LIFECYCLE_STATE_RETIRED\x10\x04*\x9e\x02\n" +
+	"\x1bAPP_LIFECYCLE_STATE_RETIRED\x10\x04*\x8b\x01\n" +
+	"\x0eAppAccessLevel\x12 \n" +
+	"\x1cAPP_ACCESS_LEVEL_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17APP_ACCESS_LEVEL_PUBLIC\x10\x01\x12\x1c\n" +
+	"\x18APP_ACCESS_LEVEL_BY_LINK\x10\x02\x12\x1c\n" +
+	"\x18APP_ACCESS_LEVEL_PRIVATE\x10\x03*\x9e\x02\n" +
 	"\x16AppPublisherPermission\x12(\n" +
 	"$APP_PUBLISHER_PERMISSION_UNSPECIFIED\x10\x00\x12%\n" +
 	"!APP_PUBLISHER_PERMISSION_APP_EDIT\x10\x01\x12,\n" +
@@ -2087,79 +2207,83 @@ func file_qwibi_v1_app_proto_rawDescGZIP() []byte {
 	return file_qwibi_v1_app_proto_rawDescData
 }
 
-var file_qwibi_v1_app_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_qwibi_v1_app_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_qwibi_v1_app_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_qwibi_v1_app_proto_goTypes = []any{
 	(AppLifecycleState)(0),                  // 0: qwibi.v1.AppLifecycleState
-	(AppPublisherPermission)(0),             // 1: qwibi.v1.AppPublisherPermission
-	(*GeoApp)(nil),                          // 2: qwibi.v1.GeoApp
-	(*CreateAppRequest)(nil),                // 3: qwibi.v1.CreateAppRequest
-	(*CreateAppResponse)(nil),               // 4: qwibi.v1.CreateAppResponse
-	(*GetAppRequest)(nil),                   // 5: qwibi.v1.GetAppRequest
-	(*GetAppResponse)(nil),                  // 6: qwibi.v1.GetAppResponse
-	(*RetireAppRequest)(nil),                // 7: qwibi.v1.RetireAppRequest
-	(*RetireAppResponse)(nil),               // 8: qwibi.v1.RetireAppResponse
-	(*DeleteAppRequest)(nil),                // 9: qwibi.v1.DeleteAppRequest
-	(*DeleteAppResponse)(nil),               // 10: qwibi.v1.DeleteAppResponse
-	(*UpdateAppRequest)(nil),                // 11: qwibi.v1.UpdateAppRequest
-	(*UpdateAppResponse)(nil),               // 12: qwibi.v1.UpdateAppResponse
-	(*AppPublisherGrant)(nil),               // 13: qwibi.v1.AppPublisherGrant
-	(*AddAppPublisherGrantRequest)(nil),     // 14: qwibi.v1.AddAppPublisherGrantRequest
-	(*AddAppPublisherGrantResponse)(nil),    // 15: qwibi.v1.AddAppPublisherGrantResponse
-	(*RemoveAppPublisherGrantRequest)(nil),  // 16: qwibi.v1.RemoveAppPublisherGrantRequest
-	(*RemoveAppPublisherGrantResponse)(nil), // 17: qwibi.v1.RemoveAppPublisherGrantResponse
-	(*ListAppPublisherGrantsRequest)(nil),   // 18: qwibi.v1.ListAppPublisherGrantsRequest
-	(*ListAppPublisherGrantsResponse)(nil),  // 19: qwibi.v1.ListAppPublisherGrantsResponse
-	(*ListMyAppsRequest)(nil),               // 20: qwibi.v1.ListMyAppsRequest
-	(*ListMyAppsResponse)(nil),              // 21: qwibi.v1.ListMyAppsResponse
-	(*CreateAppTokenRequest)(nil),           // 22: qwibi.v1.CreateAppTokenRequest
-	(*CreateAppTokenResponse)(nil),          // 23: qwibi.v1.CreateAppTokenResponse
-	(*AppTokenInfo)(nil),                    // 24: qwibi.v1.AppTokenInfo
-	(*ListAppTokensRequest)(nil),            // 25: qwibi.v1.ListAppTokensRequest
-	(*ListAppTokensResponse)(nil),           // 26: qwibi.v1.ListAppTokensResponse
-	(*RevokeAppTokenRequest)(nil),           // 27: qwibi.v1.RevokeAppTokenRequest
-	(*RevokeAppTokenResponse)(nil),          // 28: qwibi.v1.RevokeAppTokenResponse
-	(*ListPublicAppsRequest)(nil),           // 29: qwibi.v1.ListPublicAppsRequest
-	(*ListPublicAppsResponse)(nil),          // 30: qwibi.v1.ListPublicAppsResponse
-	(*timestamppb.Timestamp)(nil),           // 31: google.protobuf.Timestamp
-	(*PageRequest)(nil),                     // 32: qwibi.v1.PageRequest
-	(*PageResponse)(nil),                    // 33: qwibi.v1.PageResponse
+	(AppAccessLevel)(0),                     // 1: qwibi.v1.AppAccessLevel
+	(AppPublisherPermission)(0),             // 2: qwibi.v1.AppPublisherPermission
+	(*GeoApp)(nil),                          // 3: qwibi.v1.GeoApp
+	(*CreateAppRequest)(nil),                // 4: qwibi.v1.CreateAppRequest
+	(*CreateAppResponse)(nil),               // 5: qwibi.v1.CreateAppResponse
+	(*GetAppRequest)(nil),                   // 6: qwibi.v1.GetAppRequest
+	(*GetAppResponse)(nil),                  // 7: qwibi.v1.GetAppResponse
+	(*RetireAppRequest)(nil),                // 8: qwibi.v1.RetireAppRequest
+	(*RetireAppResponse)(nil),               // 9: qwibi.v1.RetireAppResponse
+	(*DeleteAppRequest)(nil),                // 10: qwibi.v1.DeleteAppRequest
+	(*DeleteAppResponse)(nil),               // 11: qwibi.v1.DeleteAppResponse
+	(*UpdateAppRequest)(nil),                // 12: qwibi.v1.UpdateAppRequest
+	(*UpdateAppResponse)(nil),               // 13: qwibi.v1.UpdateAppResponse
+	(*AppPublisherGrant)(nil),               // 14: qwibi.v1.AppPublisherGrant
+	(*AddAppPublisherGrantRequest)(nil),     // 15: qwibi.v1.AddAppPublisherGrantRequest
+	(*AddAppPublisherGrantResponse)(nil),    // 16: qwibi.v1.AddAppPublisherGrantResponse
+	(*RemoveAppPublisherGrantRequest)(nil),  // 17: qwibi.v1.RemoveAppPublisherGrantRequest
+	(*RemoveAppPublisherGrantResponse)(nil), // 18: qwibi.v1.RemoveAppPublisherGrantResponse
+	(*ListAppPublisherGrantsRequest)(nil),   // 19: qwibi.v1.ListAppPublisherGrantsRequest
+	(*ListAppPublisherGrantsResponse)(nil),  // 20: qwibi.v1.ListAppPublisherGrantsResponse
+	(*ListMyAppsRequest)(nil),               // 21: qwibi.v1.ListMyAppsRequest
+	(*ListMyAppsResponse)(nil),              // 22: qwibi.v1.ListMyAppsResponse
+	(*CreateAppTokenRequest)(nil),           // 23: qwibi.v1.CreateAppTokenRequest
+	(*CreateAppTokenResponse)(nil),          // 24: qwibi.v1.CreateAppTokenResponse
+	(*AppTokenInfo)(nil),                    // 25: qwibi.v1.AppTokenInfo
+	(*ListAppTokensRequest)(nil),            // 26: qwibi.v1.ListAppTokensRequest
+	(*ListAppTokensResponse)(nil),           // 27: qwibi.v1.ListAppTokensResponse
+	(*RevokeAppTokenRequest)(nil),           // 28: qwibi.v1.RevokeAppTokenRequest
+	(*RevokeAppTokenResponse)(nil),          // 29: qwibi.v1.RevokeAppTokenResponse
+	(*ListPublicAppsRequest)(nil),           // 30: qwibi.v1.ListPublicAppsRequest
+	(*ListPublicAppsResponse)(nil),          // 31: qwibi.v1.ListPublicAppsResponse
+	(*timestamppb.Timestamp)(nil),           // 32: google.protobuf.Timestamp
+	(*PageRequest)(nil),                     // 33: qwibi.v1.PageRequest
+	(*PageResponse)(nil),                    // 34: qwibi.v1.PageResponse
 }
 var file_qwibi_v1_app_proto_depIdxs = []int32{
-	31, // 0: qwibi.v1.GeoApp.created_at:type_name -> google.protobuf.Timestamp
-	31, // 1: qwibi.v1.GeoApp.updated_at:type_name -> google.protobuf.Timestamp
+	32, // 0: qwibi.v1.GeoApp.created_at:type_name -> google.protobuf.Timestamp
+	32, // 1: qwibi.v1.GeoApp.updated_at:type_name -> google.protobuf.Timestamp
 	0,  // 2: qwibi.v1.GeoApp.lifecycle_state:type_name -> qwibi.v1.AppLifecycleState
-	31, // 3: qwibi.v1.GeoApp.retired_at:type_name -> google.protobuf.Timestamp
-	2,  // 4: qwibi.v1.CreateAppResponse.app:type_name -> qwibi.v1.GeoApp
-	2,  // 5: qwibi.v1.GetAppResponse.app:type_name -> qwibi.v1.GeoApp
-	2,  // 6: qwibi.v1.RetireAppResponse.app:type_name -> qwibi.v1.GeoApp
-	2,  // 7: qwibi.v1.UpdateAppResponse.app:type_name -> qwibi.v1.GeoApp
-	1,  // 8: qwibi.v1.AppPublisherGrant.permission:type_name -> qwibi.v1.AppPublisherPermission
-	31, // 9: qwibi.v1.AppPublisherGrant.created_at:type_name -> google.protobuf.Timestamp
-	1,  // 10: qwibi.v1.AddAppPublisherGrantRequest.permission:type_name -> qwibi.v1.AppPublisherPermission
-	13, // 11: qwibi.v1.AddAppPublisherGrantResponse.grant:type_name -> qwibi.v1.AppPublisherGrant
-	1,  // 12: qwibi.v1.RemoveAppPublisherGrantRequest.permission:type_name -> qwibi.v1.AppPublisherPermission
-	32, // 13: qwibi.v1.ListAppPublisherGrantsRequest.page:type_name -> qwibi.v1.PageRequest
-	13, // 14: qwibi.v1.ListAppPublisherGrantsResponse.grants:type_name -> qwibi.v1.AppPublisherGrant
-	33, // 15: qwibi.v1.ListAppPublisherGrantsResponse.page:type_name -> qwibi.v1.PageResponse
-	32, // 16: qwibi.v1.ListMyAppsRequest.page:type_name -> qwibi.v1.PageRequest
-	2,  // 17: qwibi.v1.ListMyAppsResponse.apps:type_name -> qwibi.v1.GeoApp
-	33, // 18: qwibi.v1.ListMyAppsResponse.page:type_name -> qwibi.v1.PageResponse
-	31, // 19: qwibi.v1.CreateAppTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
-	31, // 20: qwibi.v1.AppTokenInfo.created_at:type_name -> google.protobuf.Timestamp
-	31, // 21: qwibi.v1.AppTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
-	31, // 22: qwibi.v1.AppTokenInfo.revoked_at:type_name -> google.protobuf.Timestamp
-	32, // 23: qwibi.v1.ListAppTokensRequest.page:type_name -> qwibi.v1.PageRequest
-	24, // 24: qwibi.v1.ListAppTokensResponse.tokens:type_name -> qwibi.v1.AppTokenInfo
-	33, // 25: qwibi.v1.ListAppTokensResponse.page:type_name -> qwibi.v1.PageResponse
-	32, // 26: qwibi.v1.ListPublicAppsRequest.page:type_name -> qwibi.v1.PageRequest
-	2,  // 27: qwibi.v1.ListPublicAppsResponse.apps:type_name -> qwibi.v1.GeoApp
-	33, // 28: qwibi.v1.ListPublicAppsResponse.page:type_name -> qwibi.v1.PageResponse
-	29, // [29:29] is the sub-list for method output_type
-	29, // [29:29] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	32, // 3: qwibi.v1.GeoApp.retired_at:type_name -> google.protobuf.Timestamp
+	1,  // 4: qwibi.v1.GeoApp.access_level:type_name -> qwibi.v1.AppAccessLevel
+	1,  // 5: qwibi.v1.CreateAppRequest.access_level:type_name -> qwibi.v1.AppAccessLevel
+	3,  // 6: qwibi.v1.CreateAppResponse.app:type_name -> qwibi.v1.GeoApp
+	3,  // 7: qwibi.v1.GetAppResponse.app:type_name -> qwibi.v1.GeoApp
+	3,  // 8: qwibi.v1.RetireAppResponse.app:type_name -> qwibi.v1.GeoApp
+	1,  // 9: qwibi.v1.UpdateAppRequest.access_level:type_name -> qwibi.v1.AppAccessLevel
+	3,  // 10: qwibi.v1.UpdateAppResponse.app:type_name -> qwibi.v1.GeoApp
+	2,  // 11: qwibi.v1.AppPublisherGrant.permission:type_name -> qwibi.v1.AppPublisherPermission
+	32, // 12: qwibi.v1.AppPublisherGrant.created_at:type_name -> google.protobuf.Timestamp
+	2,  // 13: qwibi.v1.AddAppPublisherGrantRequest.permission:type_name -> qwibi.v1.AppPublisherPermission
+	14, // 14: qwibi.v1.AddAppPublisherGrantResponse.grant:type_name -> qwibi.v1.AppPublisherGrant
+	2,  // 15: qwibi.v1.RemoveAppPublisherGrantRequest.permission:type_name -> qwibi.v1.AppPublisherPermission
+	33, // 16: qwibi.v1.ListAppPublisherGrantsRequest.page:type_name -> qwibi.v1.PageRequest
+	14, // 17: qwibi.v1.ListAppPublisherGrantsResponse.grants:type_name -> qwibi.v1.AppPublisherGrant
+	34, // 18: qwibi.v1.ListAppPublisherGrantsResponse.page:type_name -> qwibi.v1.PageResponse
+	33, // 19: qwibi.v1.ListMyAppsRequest.page:type_name -> qwibi.v1.PageRequest
+	3,  // 20: qwibi.v1.ListMyAppsResponse.apps:type_name -> qwibi.v1.GeoApp
+	34, // 21: qwibi.v1.ListMyAppsResponse.page:type_name -> qwibi.v1.PageResponse
+	32, // 22: qwibi.v1.CreateAppTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	32, // 23: qwibi.v1.AppTokenInfo.created_at:type_name -> google.protobuf.Timestamp
+	32, // 24: qwibi.v1.AppTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
+	32, // 25: qwibi.v1.AppTokenInfo.revoked_at:type_name -> google.protobuf.Timestamp
+	33, // 26: qwibi.v1.ListAppTokensRequest.page:type_name -> qwibi.v1.PageRequest
+	25, // 27: qwibi.v1.ListAppTokensResponse.tokens:type_name -> qwibi.v1.AppTokenInfo
+	34, // 28: qwibi.v1.ListAppTokensResponse.page:type_name -> qwibi.v1.PageResponse
+	33, // 29: qwibi.v1.ListPublicAppsRequest.page:type_name -> qwibi.v1.PageRequest
+	3,  // 30: qwibi.v1.ListPublicAppsResponse.apps:type_name -> qwibi.v1.GeoApp
+	34, // 31: qwibi.v1.ListPublicAppsResponse.page:type_name -> qwibi.v1.PageResponse
+	32, // [32:32] is the sub-list for method output_type
+	32, // [32:32] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_qwibi_v1_app_proto_init() }
@@ -2175,7 +2299,7 @@ func file_qwibi_v1_app_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_qwibi_v1_app_proto_rawDesc), len(file_qwibi_v1_app_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      3,
 			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   0,

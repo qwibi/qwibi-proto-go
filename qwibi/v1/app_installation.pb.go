@@ -256,8 +256,15 @@ type AppInstallation struct {
 	BlockedByApp    bool   `protobuf:"varint,16,opt,name=blocked_by_app,json=blockedByApp,proto3" json:"blocked_by_app,omitempty"`
 	BlockingAppName string `protobuf:"bytes,17,opt,name=blocking_app_name,json=blockingAppName,proto3" json:"blocking_app_name,omitempty"`
 	BlockReason     string `protobuf:"bytes,18,opt,name=block_reason,json=blockReason,proto3" json:"block_reason,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// The installed App's display name and access level, served with the
+	// installation so a map's owners and editors see every App added to their
+	// map, a private one included, even when they are not its members and may
+	// not read the App itself. A reader who may not use a private App never
+	// receives its installation at all.
+	AppName        string         `protobuf:"bytes,19,opt,name=app_name,json=appName,proto3" json:"app_name,omitempty"`
+	AppAccessLevel AppAccessLevel `protobuf:"varint,20,opt,name=app_access_level,json=appAccessLevel,proto3,enum=qwibi.v1.AppAccessLevel" json:"app_access_level,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *AppInstallation) Reset() {
@@ -393,6 +400,20 @@ func (x *AppInstallation) GetBlockReason() string {
 		return x.BlockReason
 	}
 	return ""
+}
+
+func (x *AppInstallation) GetAppName() string {
+	if x != nil {
+		return x.AppName
+	}
+	return ""
+}
+
+func (x *AppInstallation) GetAppAccessLevel() AppAccessLevel {
+	if x != nil {
+		return x.AppAccessLevel
+	}
+	return AppAccessLevel_APP_ACCESS_LEVEL_UNSPECIFIED
 }
 
 type InstallationParticipantConsent struct {
@@ -1356,12 +1377,12 @@ var File_qwibi_v1_app_installation_proto protoreflect.FileDescriptor
 
 const file_qwibi_v1_app_installation_proto_rawDesc = "" +
 	"\n" +
-	"\x1fqwibi/v1/app_installation.proto\x12\bqwibi.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1aqwibi/v1/app_release.proto\x1a\x1bqwibi/v1/auth_options.proto\x1a\x15qwibi/v1/common.proto\"\xb5\x03\n" +
+	"\x1fqwibi/v1/app_installation.proto\x12\bqwibi.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12qwibi/v1/app.proto\x1a\x1aqwibi/v1/app_release.proto\x1a\x1bqwibi/v1/auth_options.proto\x1a\x15qwibi/v1/common.proto\"\xb5\x03\n" +
 	"\x15AppActionAvailability\x12?\n" +
 	"\taction_id\x18\x01 \x01(\tB\"\xbaH\x1fr\x1d\x10\x01\x18@2\x17^[a-z][a-z0-9_-]{0,63}$R\bactionId\x12\x1c\n" +
 	"\tavailable\x18\x02 \x01(\bR\tavailable\x12]\n" +
 	"\x12unavailable_reason\x18\x03 \x01(\x0e2$.qwibi.v1.AppActionUnavailableReasonB\b\xbaH\x05\x82\x01\x02\x10\x01R\x11unavailableReason:\xdd\x01\xbaH\xd9\x01\x1a\xd6\x01\n" +
-	"\x1eapp_action_availability.reason\x12Mavailable actions have no unavailable reason and unavailable actions have one\x1ae(this.available && this.unavailable_reason == 0) || (!this.available && this.unavailable_reason != 0)\"\x9b\a\n" +
+	"\x1eapp_action_availability.reason\x12Mavailable actions have no unavailable reason and unavailable actions have one\x1ae(this.available && this.unavailable_reason == 0) || (!this.available && this.unavailable_reason != 0)\"\xfa\a\n" +
 	"\x0fAppInstallation\x121\n" +
 	"\x0finstallation_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0einstallationId\x12#\n" +
 	"\blayer_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\alayerId\x12\x1f\n" +
@@ -1382,7 +1403,9 @@ const file_qwibi_v1_app_installation_proto_rawDesc = "" +
 	"\x1aactive_action_availability\x18\x0f \x03(\v2\x1f.qwibi.v1.AppActionAvailabilityB\t\xbaH\x06\x92\x01\x03\x10\x80\x02R\x18activeActionAvailability\x12$\n" +
 	"\x0eblocked_by_app\x18\x10 \x01(\bR\fblockedByApp\x12*\n" +
 	"\x11blocking_app_name\x18\x11 \x01(\tR\x0fblockingAppName\x12!\n" +
-	"\fblock_reason\x18\x12 \x01(\tR\vblockReasonJ\x04\b\x04\x10\x05J\x04\b\a\x10\bJ\x04\b\b\x10\tR\x10app_principal_idR\x0eactive_releaseR\x0fpending_release\"\xcb\x02\n" +
+	"\fblock_reason\x18\x12 \x01(\tR\vblockReason\x12\x19\n" +
+	"\bapp_name\x18\x13 \x01(\tR\aappName\x12B\n" +
+	"\x10app_access_level\x18\x14 \x01(\x0e2\x18.qwibi.v1.AppAccessLevelR\x0eappAccessLevelJ\x04\b\x04\x10\x05J\x04\b\a\x10\bJ\x04\b\b\x10\tR\x10app_principal_idR\x0eactive_releaseR\x0fpending_release\"\xcb\x02\n" +
 	"\x1eInstallationParticipantConsent\x12\x1f\n" +
 	"\x06app_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x05appId\x12'\n" +
 	"\n" +
@@ -1509,9 +1532,10 @@ var file_qwibi_v1_app_installation_proto_goTypes = []any{
 	(*ListMyInstallationParticipantConsentsRequest)(nil),  // 22: qwibi.v1.ListMyInstallationParticipantConsentsRequest
 	(*ListMyInstallationParticipantConsentsResponse)(nil), // 23: qwibi.v1.ListMyInstallationParticipantConsentsResponse
 	(*timestamppb.Timestamp)(nil),                         // 24: google.protobuf.Timestamp
-	(AppRight)(0),                                         // 25: qwibi.v1.AppRight
-	(*PageRequest)(nil),                                   // 26: qwibi.v1.PageRequest
-	(*PageResponse)(nil),                                  // 27: qwibi.v1.PageResponse
+	(AppAccessLevel)(0),                                   // 25: qwibi.v1.AppAccessLevel
+	(AppRight)(0),                                         // 26: qwibi.v1.AppRight
+	(*PageRequest)(nil),                                   // 27: qwibi.v1.PageRequest
+	(*PageResponse)(nil),                                  // 28: qwibi.v1.PageResponse
 }
 var file_qwibi_v1_app_installation_proto_depIdxs = []int32{
 	1,  // 0: qwibi.v1.AppActionAvailability.unavailable_reason:type_name -> qwibi.v1.AppActionUnavailableReason
@@ -1522,47 +1546,48 @@ var file_qwibi_v1_app_installation_proto_depIdxs = []int32{
 	24, // 5: qwibi.v1.AppInstallation.suspended_at:type_name -> google.protobuf.Timestamp
 	24, // 6: qwibi.v1.AppInstallation.removed_at:type_name -> google.protobuf.Timestamp
 	3,  // 7: qwibi.v1.AppInstallation.active_action_availability:type_name -> qwibi.v1.AppActionAvailability
-	25, // 8: qwibi.v1.InstallationParticipantConsent.right:type_name -> qwibi.v1.AppRight
-	2,  // 9: qwibi.v1.InstallationParticipantConsent.decision:type_name -> qwibi.v1.InstallationParticipantConsentDecision
-	24, // 10: qwibi.v1.InstallationParticipantConsent.decided_at:type_name -> google.protobuf.Timestamp
-	4,  // 11: qwibi.v1.InstallAppResponse.installation:type_name -> qwibi.v1.AppInstallation
-	4,  // 12: qwibi.v1.AddAppToMyMapResponse.installation:type_name -> qwibi.v1.AppInstallation
-	4,  // 13: qwibi.v1.GetAppInstallationResponse.installation:type_name -> qwibi.v1.AppInstallation
-	26, // 14: qwibi.v1.ListAppInstallationsRequest.page:type_name -> qwibi.v1.PageRequest
-	4,  // 15: qwibi.v1.ListAppInstallationsResponse.installations:type_name -> qwibi.v1.AppInstallation
-	27, // 16: qwibi.v1.ListAppInstallationsResponse.page:type_name -> qwibi.v1.PageResponse
-	4,  // 17: qwibi.v1.SuspendAppInstallationResponse.installation:type_name -> qwibi.v1.AppInstallation
-	4,  // 18: qwibi.v1.ResumeAppInstallationResponse.installation:type_name -> qwibi.v1.AppInstallation
-	4,  // 19: qwibi.v1.RemoveAppInstallationResponse.installation:type_name -> qwibi.v1.AppInstallation
-	25, // 20: qwibi.v1.SetInstallationParticipantConsentRequest.right:type_name -> qwibi.v1.AppRight
-	2,  // 21: qwibi.v1.SetInstallationParticipantConsentRequest.decision:type_name -> qwibi.v1.InstallationParticipantConsentDecision
-	5,  // 22: qwibi.v1.SetInstallationParticipantConsentResponse.consent:type_name -> qwibi.v1.InstallationParticipantConsent
-	26, // 23: qwibi.v1.ListMyInstallationParticipantConsentsRequest.page:type_name -> qwibi.v1.PageRequest
-	5,  // 24: qwibi.v1.ListMyInstallationParticipantConsentsResponse.consents:type_name -> qwibi.v1.InstallationParticipantConsent
-	27, // 25: qwibi.v1.ListMyInstallationParticipantConsentsResponse.page:type_name -> qwibi.v1.PageResponse
-	6,  // 26: qwibi.v1.AppInstallationService.InstallApp:input_type -> qwibi.v1.InstallAppRequest
-	8,  // 27: qwibi.v1.AppInstallationService.AddAppToMyMap:input_type -> qwibi.v1.AddAppToMyMapRequest
-	10, // 28: qwibi.v1.AppInstallationService.GetAppInstallation:input_type -> qwibi.v1.GetAppInstallationRequest
-	12, // 29: qwibi.v1.AppInstallationService.ListAppInstallations:input_type -> qwibi.v1.ListAppInstallationsRequest
-	14, // 30: qwibi.v1.AppInstallationService.SuspendAppInstallation:input_type -> qwibi.v1.SuspendAppInstallationRequest
-	16, // 31: qwibi.v1.AppInstallationService.ResumeAppInstallation:input_type -> qwibi.v1.ResumeAppInstallationRequest
-	18, // 32: qwibi.v1.AppInstallationService.RemoveAppInstallation:input_type -> qwibi.v1.RemoveAppInstallationRequest
-	20, // 33: qwibi.v1.AppInstallationService.SetInstallationParticipantConsent:input_type -> qwibi.v1.SetInstallationParticipantConsentRequest
-	22, // 34: qwibi.v1.AppInstallationService.ListMyInstallationParticipantConsents:input_type -> qwibi.v1.ListMyInstallationParticipantConsentsRequest
-	7,  // 35: qwibi.v1.AppInstallationService.InstallApp:output_type -> qwibi.v1.InstallAppResponse
-	9,  // 36: qwibi.v1.AppInstallationService.AddAppToMyMap:output_type -> qwibi.v1.AddAppToMyMapResponse
-	11, // 37: qwibi.v1.AppInstallationService.GetAppInstallation:output_type -> qwibi.v1.GetAppInstallationResponse
-	13, // 38: qwibi.v1.AppInstallationService.ListAppInstallations:output_type -> qwibi.v1.ListAppInstallationsResponse
-	15, // 39: qwibi.v1.AppInstallationService.SuspendAppInstallation:output_type -> qwibi.v1.SuspendAppInstallationResponse
-	17, // 40: qwibi.v1.AppInstallationService.ResumeAppInstallation:output_type -> qwibi.v1.ResumeAppInstallationResponse
-	19, // 41: qwibi.v1.AppInstallationService.RemoveAppInstallation:output_type -> qwibi.v1.RemoveAppInstallationResponse
-	21, // 42: qwibi.v1.AppInstallationService.SetInstallationParticipantConsent:output_type -> qwibi.v1.SetInstallationParticipantConsentResponse
-	23, // 43: qwibi.v1.AppInstallationService.ListMyInstallationParticipantConsents:output_type -> qwibi.v1.ListMyInstallationParticipantConsentsResponse
-	35, // [35:44] is the sub-list for method output_type
-	26, // [26:35] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	25, // 8: qwibi.v1.AppInstallation.app_access_level:type_name -> qwibi.v1.AppAccessLevel
+	26, // 9: qwibi.v1.InstallationParticipantConsent.right:type_name -> qwibi.v1.AppRight
+	2,  // 10: qwibi.v1.InstallationParticipantConsent.decision:type_name -> qwibi.v1.InstallationParticipantConsentDecision
+	24, // 11: qwibi.v1.InstallationParticipantConsent.decided_at:type_name -> google.protobuf.Timestamp
+	4,  // 12: qwibi.v1.InstallAppResponse.installation:type_name -> qwibi.v1.AppInstallation
+	4,  // 13: qwibi.v1.AddAppToMyMapResponse.installation:type_name -> qwibi.v1.AppInstallation
+	4,  // 14: qwibi.v1.GetAppInstallationResponse.installation:type_name -> qwibi.v1.AppInstallation
+	27, // 15: qwibi.v1.ListAppInstallationsRequest.page:type_name -> qwibi.v1.PageRequest
+	4,  // 16: qwibi.v1.ListAppInstallationsResponse.installations:type_name -> qwibi.v1.AppInstallation
+	28, // 17: qwibi.v1.ListAppInstallationsResponse.page:type_name -> qwibi.v1.PageResponse
+	4,  // 18: qwibi.v1.SuspendAppInstallationResponse.installation:type_name -> qwibi.v1.AppInstallation
+	4,  // 19: qwibi.v1.ResumeAppInstallationResponse.installation:type_name -> qwibi.v1.AppInstallation
+	4,  // 20: qwibi.v1.RemoveAppInstallationResponse.installation:type_name -> qwibi.v1.AppInstallation
+	26, // 21: qwibi.v1.SetInstallationParticipantConsentRequest.right:type_name -> qwibi.v1.AppRight
+	2,  // 22: qwibi.v1.SetInstallationParticipantConsentRequest.decision:type_name -> qwibi.v1.InstallationParticipantConsentDecision
+	5,  // 23: qwibi.v1.SetInstallationParticipantConsentResponse.consent:type_name -> qwibi.v1.InstallationParticipantConsent
+	27, // 24: qwibi.v1.ListMyInstallationParticipantConsentsRequest.page:type_name -> qwibi.v1.PageRequest
+	5,  // 25: qwibi.v1.ListMyInstallationParticipantConsentsResponse.consents:type_name -> qwibi.v1.InstallationParticipantConsent
+	28, // 26: qwibi.v1.ListMyInstallationParticipantConsentsResponse.page:type_name -> qwibi.v1.PageResponse
+	6,  // 27: qwibi.v1.AppInstallationService.InstallApp:input_type -> qwibi.v1.InstallAppRequest
+	8,  // 28: qwibi.v1.AppInstallationService.AddAppToMyMap:input_type -> qwibi.v1.AddAppToMyMapRequest
+	10, // 29: qwibi.v1.AppInstallationService.GetAppInstallation:input_type -> qwibi.v1.GetAppInstallationRequest
+	12, // 30: qwibi.v1.AppInstallationService.ListAppInstallations:input_type -> qwibi.v1.ListAppInstallationsRequest
+	14, // 31: qwibi.v1.AppInstallationService.SuspendAppInstallation:input_type -> qwibi.v1.SuspendAppInstallationRequest
+	16, // 32: qwibi.v1.AppInstallationService.ResumeAppInstallation:input_type -> qwibi.v1.ResumeAppInstallationRequest
+	18, // 33: qwibi.v1.AppInstallationService.RemoveAppInstallation:input_type -> qwibi.v1.RemoveAppInstallationRequest
+	20, // 34: qwibi.v1.AppInstallationService.SetInstallationParticipantConsent:input_type -> qwibi.v1.SetInstallationParticipantConsentRequest
+	22, // 35: qwibi.v1.AppInstallationService.ListMyInstallationParticipantConsents:input_type -> qwibi.v1.ListMyInstallationParticipantConsentsRequest
+	7,  // 36: qwibi.v1.AppInstallationService.InstallApp:output_type -> qwibi.v1.InstallAppResponse
+	9,  // 37: qwibi.v1.AppInstallationService.AddAppToMyMap:output_type -> qwibi.v1.AddAppToMyMapResponse
+	11, // 38: qwibi.v1.AppInstallationService.GetAppInstallation:output_type -> qwibi.v1.GetAppInstallationResponse
+	13, // 39: qwibi.v1.AppInstallationService.ListAppInstallations:output_type -> qwibi.v1.ListAppInstallationsResponse
+	15, // 40: qwibi.v1.AppInstallationService.SuspendAppInstallation:output_type -> qwibi.v1.SuspendAppInstallationResponse
+	17, // 41: qwibi.v1.AppInstallationService.ResumeAppInstallation:output_type -> qwibi.v1.ResumeAppInstallationResponse
+	19, // 42: qwibi.v1.AppInstallationService.RemoveAppInstallation:output_type -> qwibi.v1.RemoveAppInstallationResponse
+	21, // 43: qwibi.v1.AppInstallationService.SetInstallationParticipantConsent:output_type -> qwibi.v1.SetInstallationParticipantConsentResponse
+	23, // 44: qwibi.v1.AppInstallationService.ListMyInstallationParticipantConsents:output_type -> qwibi.v1.ListMyInstallationParticipantConsentsResponse
+	36, // [36:45] is the sub-list for method output_type
+	27, // [27:36] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_qwibi_v1_app_installation_proto_init() }
@@ -1570,6 +1595,7 @@ func file_qwibi_v1_app_installation_proto_init() {
 	if File_qwibi_v1_app_installation_proto != nil {
 		return
 	}
+	file_qwibi_v1_app_proto_init()
 	file_qwibi_v1_app_release_proto_init()
 	file_qwibi_v1_auth_options_proto_init()
 	file_qwibi_v1_common_proto_init()

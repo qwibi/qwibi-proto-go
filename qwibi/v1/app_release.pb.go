@@ -2079,6 +2079,11 @@ type DeclarativeUiField struct {
 	Minimum       *float64                        `protobuf:"fixed64,12,opt,name=minimum,proto3,oneof" json:"minimum,omitempty"`
 	Maximum       *float64                        `protobuf:"fixed64,13,opt,name=maximum,proto3,oneof" json:"maximum,omitempty"`
 	Step          *float64                        `protobuf:"fixed64,14,opt,name=step,proto3,oneof" json:"step,omitempty"`
+	// Optional, OBJECT_REFERENCE fields only: the host fills the field with the
+	// objects the person marked with this declared mark, from the account or,
+	// without a confirmed email, from the device. Like any input, the value
+	// reaches the App only when the person sends the form.
+	PrefillMarkId string `protobuf:"bytes,15,opt,name=prefill_mark_id,json=prefillMarkId,proto3" json:"prefill_mark_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2209,6 +2214,13 @@ func (x *DeclarativeUiField) GetStep() float64 {
 		return *x.Step
 	}
 	return 0
+}
+
+func (x *DeclarativeUiField) GetPrefillMarkId() string {
+	if x != nil {
+		return x.PrefillMarkId
+	}
+	return ""
 }
 
 // DeclarativeObjectCollection declares one generic collection on an object
@@ -2670,8 +2682,10 @@ type AppRelease struct {
 	OptionalExtensions     *structpb.Struct             `protobuf:"bytes,20,opt,name=optional_extensions,json=optionalExtensions,proto3" json:"optional_extensions,omitempty"`
 	// The declared action the host opens first for this installation.
 	PrimaryActionId string `protobuf:"bytes,23,opt,name=primary_action_id,json=primaryActionId,proto3" json:"primary_action_id,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// The private marks people may set on this App's data.
+	Marks         []*AppMarkDefinition `protobuf:"bytes,24,rep,name=marks,proto3" json:"marks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AppRelease) Reset() {
@@ -2816,6 +2830,122 @@ func (x *AppRelease) GetPrimaryActionId() string {
 	return ""
 }
 
+func (x *AppRelease) GetMarks() []*AppMarkDefinition {
+	if x != nil {
+		return x.Marks
+	}
+	return nil
+}
+
+// AppMarkDefinition declares a private mark a person may set on App data of
+// one type: "visited" on a country, "my-stop" on a stop.
+type AppMarkDefinition struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	MarkId string                 `protobuf:"bytes,1,opt,name=mark_id,json=markId,proto3" json:"mark_id,omitempty"`
+	// The App data type the mark applies to; it names a declared object schema.
+	ObjectType           string `protobuf:"bytes,2,opt,name=object_type,json=objectType,proto3" json:"object_type,omitempty"`
+	LabelLocalizationKey string `protobuf:"bytes,3,opt,name=label_localization_key,json=labelLocalizationKey,proto3" json:"label_localization_key,omitempty"`
+	// At most one marked object per person.
+	Single bool `protobuf:"varint,4,opt,name=single,proto3" json:"single,omitempty"`
+	// The accent of marked objects: a literal colour or a normative semantic
+	// token, like the values named by accent_color_property.
+	MarkedStyle string `protobuf:"bytes,5,opt,name=marked_style,json=markedStyle,proto3" json:"marked_style,omitempty"`
+	// The App panel shows the number of marked objects.
+	ShowCount bool `protobuf:"varint,6,opt,name=show_count,json=showCount,proto3" json:"show_count,omitempty"`
+	// Optional: show objects of this type only if their filter_property names a
+	// marked object (by id or HID). Both are set or neither.
+	FiltersObjectType string `protobuf:"bytes,7,opt,name=filters_object_type,json=filtersObjectType,proto3" json:"filters_object_type,omitempty"`
+	FilterProperty    string `protobuf:"bytes,8,opt,name=filter_property,json=filterProperty,proto3" json:"filter_property,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *AppMarkDefinition) Reset() {
+	*x = AppMarkDefinition{}
+	mi := &file_qwibi_v1_app_release_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppMarkDefinition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppMarkDefinition) ProtoMessage() {}
+
+func (x *AppMarkDefinition) ProtoReflect() protoreflect.Message {
+	mi := &file_qwibi_v1_app_release_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppMarkDefinition.ProtoReflect.Descriptor instead.
+func (*AppMarkDefinition) Descriptor() ([]byte, []int) {
+	return file_qwibi_v1_app_release_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *AppMarkDefinition) GetMarkId() string {
+	if x != nil {
+		return x.MarkId
+	}
+	return ""
+}
+
+func (x *AppMarkDefinition) GetObjectType() string {
+	if x != nil {
+		return x.ObjectType
+	}
+	return ""
+}
+
+func (x *AppMarkDefinition) GetLabelLocalizationKey() string {
+	if x != nil {
+		return x.LabelLocalizationKey
+	}
+	return ""
+}
+
+func (x *AppMarkDefinition) GetSingle() bool {
+	if x != nil {
+		return x.Single
+	}
+	return false
+}
+
+func (x *AppMarkDefinition) GetMarkedStyle() string {
+	if x != nil {
+		return x.MarkedStyle
+	}
+	return ""
+}
+
+func (x *AppMarkDefinition) GetShowCount() bool {
+	if x != nil {
+		return x.ShowCount
+	}
+	return false
+}
+
+func (x *AppMarkDefinition) GetFiltersObjectType() string {
+	if x != nil {
+		return x.FiltersObjectType
+	}
+	return ""
+}
+
+func (x *AppMarkDefinition) GetFilterProperty() string {
+	if x != nil {
+		return x.FilterProperty
+	}
+	return ""
+}
+
 var File_qwibi_v1_app_release_proto protoreflect.FileDescriptor
 
 const file_qwibi_v1_app_release_proto_rawDesc = "" +
@@ -2940,7 +3070,7 @@ const file_qwibi_v1_app_release_proto_rawDesc = "" +
 	"\x12_icon_asset_sha256\"y\n" +
 	"\x17DeclarativeChoiceOption\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x01R\x05value\x12>\n" +
-	"\x16label_localization_key\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x01R\x14labelLocalizationKey\"\x9d\v\n" +
+	"\x16label_localization_key\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x01R\x14labelLocalizationKey\"\xea\v\n" +
 	"\x12DeclarativeUiField\x12<\n" +
 	"\bfield_id\x18\x01 \x01(\tB!\xbaH\x1er\x1c\x10\x01\x18@2\x16^[a-z][a-z0-9_]{0,63}$R\afieldId\x12>\n" +
 	"\x04kind\x18\x02 \x01(\x0e2\x1e.qwibi.v1.DeclarativeFieldKindB\n" +
@@ -2958,7 +3088,8 @@ const file_qwibi_v1_app_release_proto_rawDesc = "" +
 	"\x0echoice_options\x18\v \x03(\v2!.qwibi.v1.DeclarativeChoiceOptionB\b\xbaH\x05\x92\x01\x02\x10@R\rchoiceOptions\x12\x1d\n" +
 	"\aminimum\x18\f \x01(\x01H\x00R\aminimum\x88\x01\x01\x12\x1d\n" +
 	"\amaximum\x18\r \x01(\x01H\x01R\amaximum\x88\x01\x01\x12\x17\n" +
-	"\x04step\x18\x0e \x01(\x01H\x02R\x04step\x88\x01\x01:\xd4\x04\xbaH\xd0\x04\x1a\x8a\x01\n" +
+	"\x04step\x18\x0e \x01(\x01H\x02R\x04step\x88\x01\x01\x12K\n" +
+	"\x0fprefill_mark_id\x18\x0f \x01(\tB#\xbaH r\x1e\x18@2\x1a^$|^[a-z][a-z0-9_-]{0,63}$R\rprefillMarkId:\xd4\x04\xbaH\xd0\x04\x1a\x8a\x01\n" +
 	")declarative_ui_field.interaction_required\x12*a shell interaction field must be required\x1a1this.kind < 10 || this.kind > 11 || this.required\x1a\xc0\x03\n" +
 	")declarative_ui_field.interaction_metadata\x12Ya shell interaction field cannot declare choice, reference, range or cardinality metadata\x1a\xb7\x02this.kind < 10 || this.kind > 11 || (this.choices.size() == 0 && this.object_type == '' && this.object_reference_value_kind == 0 && this.cardinality == 0 && this.max_items == 0u && this.picker_sources.size() == 0 && this.choice_options.size() == 0 && !has(this.minimum) && !has(this.maximum) && !has(this.step))B\n" +
 	"\n" +
@@ -3012,7 +3143,7 @@ const file_qwibi_v1_app_release_proto_rawDesc = "" +
 	"\x12privacy_policy_url\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10R\x10privacyPolicyUrl\x12+\n" +
 	"\flicense_name\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x01R\vlicenseName\x12)\n" +
 	"\vlicense_url\x18\x05 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10R\n" +
-	"licenseUrl\"\x92\x11\n" +
+	"licenseUrl\"\xcf\x11\n" +
 	"\n" +
 	"AppRelease\x12g\n" +
 	"\n" +
@@ -3032,10 +3163,24 @@ const file_qwibi_v1_app_release_proto_rawDesc = "" +
 	"\x12publisher_metadata\x18\x12 \x01(\v2\".qwibi.v1.ReleasePublisherMetadataB\x06\xbaH\x03\xc8\x01\x01R\x11publisherMetadata\x12E\n" +
 	"\fpublished_at\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vpublishedAt\x12H\n" +
 	"\x13optional_extensions\x18\x14 \x01(\v2\x17.google.protobuf.StructR\x12optionalExtensions\x12O\n" +
-	"\x11primary_action_id\x18\x17 \x01(\tB#\xbaH r\x1e\x18@2\x1a^$|^[a-z][a-z0-9_-]{0,63}$R\x0fprimaryActionId:\x88\x05\xbaH\x84\x05\x1a\xc2\x01\n" +
+	"\x11primary_action_id\x18\x17 \x01(\tB#\xbaH r\x1e\x18@2\x1a^$|^[a-z][a-z0-9_-]{0,63}$R\x0fprimaryActionId\x12;\n" +
+	"\x05marks\x18\x18 \x03(\v2\x1b.qwibi.v1.AppMarkDefinitionB\b\xbaH\x05\x92\x01\x02\x10\x10R\x05marks:\x88\x05\xbaH\x84\x05\x1a\xc2\x01\n" +
 	"+app_release.interaction_fields_observe_only\x126shell interaction parameters require an OBSERVE action\x1a[this.actions.all(a, a.parameters.all(f, f.kind < 10 || f.kind > 99 || a.effect_class == 1))\x1a\xbc\x03\n" +
 	"&app_release.interaction_contract_range\x12Finteraction fields and point sets require contract_range minimum 0.2.0\x1a\xc9\x02!(this.actions.exists(a, a.parameters.exists(f, f.kind >= 10 && f.kind <= 11) || (has(a.declarative_result_schema) && has(a.declarative_result_schema.point_set)))) || (has(this.contract_range) && this.contract_range.minimum_inclusive.matches('^([1-9][0-9]*[.]|0[.]([3-9]|[1-9][0-9]+)[.]|0[.]2[.](0($|[+])|[1-9][0-9]*($|[-+])))'))J\x04\b\x06\x10\aJ\x04\b\a\x10\bJ\x04\b\b\x10\tJ\x04\b\x0f\x10\x10J\x04\b\t\x10\n" +
-	"J\x04\b\x15\x10\x16J\x04\b\x16\x10\x17R\x15required_capabilitiesR\x15optional_capabilitiesR\x10external_runtimeR\asignalsR\x17primary_contribution_id*X\n" +
+	"J\x04\b\x15\x10\x16J\x04\b\x16\x10\x17R\x15required_capabilitiesR\x15optional_capabilitiesR\x10external_runtimeR\asignalsR\x17primary_contribution_id\"\x8f\x03\n" +
+	"\x11AppMarkDefinition\x12;\n" +
+	"\amark_id\x18\x01 \x01(\tB\"\xbaH\x1fr\x1d\x10\x01\x18@2\x17^[a-z][a-z0-9_-]{0,63}$R\x06markId\x12+\n" +
+	"\vobject_type\x18\x02 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\x80\x01R\n" +
+	"objectType\x12@\n" +
+	"\x16label_localization_key\x18\x03 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\x80\x01R\x14labelLocalizationKey\x12\x16\n" +
+	"\x06single\x18\x04 \x01(\bR\x06single\x12*\n" +
+	"\fmarked_style\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x18@R\vmarkedStyle\x12\x1d\n" +
+	"\n" +
+	"show_count\x18\x06 \x01(\bR\tshowCount\x128\n" +
+	"\x13filters_object_type\x18\a \x01(\tB\b\xbaH\x05r\x03\x18\x80\x01R\x11filtersObjectType\x121\n" +
+	"\x0ffilter_property\x18\b \x01(\tB\b\xbaH\x05r\x03\x18\x80\x01R\x0efilterProperty*X\n" +
 	"\bAppRight\x12\x19\n" +
 	"\x15APP_RIGHT_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17APP_RIGHT_LIVE_LOCATION\x10\x01\x12\x14\n" +
@@ -3131,7 +3276,7 @@ func file_qwibi_v1_app_release_proto_rawDescGZIP() []byte {
 }
 
 var file_qwibi_v1_app_release_proto_enumTypes = make([]protoimpl.EnumInfo, 16)
-var file_qwibi_v1_app_release_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_qwibi_v1_app_release_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_qwibi_v1_app_release_proto_goTypes = []any{
 	(AppRight)(0),                            // 0: qwibi.v1.AppRight
 	(AppActionEffectClass)(0),                // 1: qwibi.v1.AppActionEffectClass
@@ -3172,14 +3317,15 @@ var file_qwibi_v1_app_release_proto_goTypes = []any{
 	(*ReleaseAsset)(nil),                     // 36: qwibi.v1.ReleaseAsset
 	(*ReleasePublisherMetadata)(nil),         // 37: qwibi.v1.ReleasePublisherMetadata
 	(*AppRelease)(nil),                       // 38: qwibi.v1.AppRelease
-	nil,                                      // 39: qwibi.v1.AppLocalization.EntriesEntry
-	(*timestamppb.Timestamp)(nil),            // 40: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),                  // 41: google.protobuf.Struct
+	(*AppMarkDefinition)(nil),                // 39: qwibi.v1.AppMarkDefinition
+	nil,                                      // 40: qwibi.v1.AppLocalization.EntriesEntry
+	(*timestamppb.Timestamp)(nil),            // 41: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),                  // 42: google.protobuf.Struct
 }
 var file_qwibi_v1_app_release_proto_depIdxs = []int32{
 	8,  // 0: qwibi.v1.AppReleaseLifecycle.status:type_name -> qwibi.v1.AppReleaseLifecycleStatus
-	40, // 1: qwibi.v1.AppReleaseLifecycle.updated_at:type_name -> google.protobuf.Timestamp
-	40, // 2: qwibi.v1.AppReleaseLifecycle.suspended_at:type_name -> google.protobuf.Timestamp
+	41, // 1: qwibi.v1.AppReleaseLifecycle.updated_at:type_name -> google.protobuf.Timestamp
+	41, // 2: qwibi.v1.AppReleaseLifecycle.suspended_at:type_name -> google.protobuf.Timestamp
 	17, // 3: qwibi.v1.AppReleaseSelector.app_version:type_name -> qwibi.v1.AppVersionSelector
 	14, // 4: qwibi.v1.DeclarativeResultParameter.format_kind:type_name -> qwibi.v1.DeclarativeValueFormatKind
 	15, // 5: qwibi.v1.DeclarativeResultObjectReference.value_kind:type_name -> qwibi.v1.ObjectReferenceValueKind
@@ -3188,8 +3334,8 @@ var file_qwibi_v1_app_release_proto_depIdxs = []int32{
 	22, // 8: qwibi.v1.DeclarativeResultSchema.segments:type_name -> qwibi.v1.DeclarativeResultSegmentSchema
 	23, // 9: qwibi.v1.DeclarativeResultSchema.point_set:type_name -> qwibi.v1.DeclarativeResultPointSetSchema
 	1,  // 10: qwibi.v1.AppActionDefinition.effect_class:type_name -> qwibi.v1.AppActionEffectClass
-	41, // 11: qwibi.v1.AppActionDefinition.input_schema:type_name -> google.protobuf.Struct
-	41, // 12: qwibi.v1.AppActionDefinition.result_schema:type_name -> google.protobuf.Struct
+	42, // 11: qwibi.v1.AppActionDefinition.input_schema:type_name -> google.protobuf.Struct
+	42, // 12: qwibi.v1.AppActionDefinition.result_schema:type_name -> google.protobuf.Struct
 	24, // 13: qwibi.v1.AppActionDefinition.declarative_result_schema:type_name -> qwibi.v1.DeclarativeResultSchema
 	0,  // 14: qwibi.v1.AppActionDefinition.required_rights:type_name -> qwibi.v1.AppRight
 	31, // 15: qwibi.v1.AppActionDefinition.parameters:type_name -> qwibi.v1.DeclarativeUiField
@@ -3197,7 +3343,7 @@ var file_qwibi_v1_app_release_proto_depIdxs = []int32{
 	3,  // 17: qwibi.v1.AppActionDefinition.executor:type_name -> qwibi.v1.AppActionExecutor
 	26, // 18: qwibi.v1.AppActionDefinition.object_bindings:type_name -> qwibi.v1.AppActionObjectBinding
 	4,  // 19: qwibi.v1.AppActionObjectBinding.presentation_role:type_name -> qwibi.v1.AppActionPresentationRole
-	41, // 20: qwibi.v1.AppObjectSchema.schema:type_name -> google.protobuf.Struct
+	42, // 20: qwibi.v1.AppObjectSchema.schema:type_name -> google.protobuf.Struct
 	14, // 21: qwibi.v1.AppObjectPropertyRow.format_kind:type_name -> qwibi.v1.DeclarativeValueFormatKind
 	15, // 22: qwibi.v1.AppObjectPropertyRow.object_reference_value_kind:type_name -> qwibi.v1.ObjectReferenceValueKind
 	28, // 23: qwibi.v1.AppObjectPresentation.property_rows:type_name -> qwibi.v1.AppObjectPropertyRow
@@ -3209,7 +3355,7 @@ var file_qwibi_v1_app_release_proto_depIdxs = []int32{
 	10, // 29: qwibi.v1.DeclarativeObjectCollection.kind:type_name -> qwibi.v1.DeclarativeObjectCollectionKind
 	9,  // 30: qwibi.v1.DeclarativeUiContribution.kind:type_name -> qwibi.v1.DeclarativeUiKind
 	32, // 31: qwibi.v1.DeclarativeUiContribution.object_collections:type_name -> qwibi.v1.DeclarativeObjectCollection
-	39, // 32: qwibi.v1.AppLocalization.entries:type_name -> qwibi.v1.AppLocalization.EntriesEntry
+	40, // 32: qwibi.v1.AppLocalization.entries:type_name -> qwibi.v1.AppLocalization.EntriesEntry
 	5,  // 33: qwibi.v1.SafeGenericFallbacks.unknown_object:type_name -> qwibi.v1.UnknownObjectFallback
 	6,  // 34: qwibi.v1.SafeGenericFallbacks.unknown_ui:type_name -> qwibi.v1.UnknownUiFallback
 	7,  // 35: qwibi.v1.SafeGenericFallbacks.unknown_action:type_name -> qwibi.v1.UnknownActionFallback
@@ -3222,13 +3368,14 @@ var file_qwibi_v1_app_release_proto_depIdxs = []int32{
 	35, // 42: qwibi.v1.AppRelease.safe_fallbacks:type_name -> qwibi.v1.SafeGenericFallbacks
 	36, // 43: qwibi.v1.AppRelease.assets:type_name -> qwibi.v1.ReleaseAsset
 	37, // 44: qwibi.v1.AppRelease.publisher_metadata:type_name -> qwibi.v1.ReleasePublisherMetadata
-	40, // 45: qwibi.v1.AppRelease.published_at:type_name -> google.protobuf.Timestamp
-	41, // 46: qwibi.v1.AppRelease.optional_extensions:type_name -> google.protobuf.Struct
-	47, // [47:47] is the sub-list for method output_type
-	47, // [47:47] is the sub-list for method input_type
-	47, // [47:47] is the sub-list for extension type_name
-	47, // [47:47] is the sub-list for extension extendee
-	0,  // [0:47] is the sub-list for field type_name
+	41, // 45: qwibi.v1.AppRelease.published_at:type_name -> google.protobuf.Timestamp
+	42, // 46: qwibi.v1.AppRelease.optional_extensions:type_name -> google.protobuf.Struct
+	39, // 47: qwibi.v1.AppRelease.marks:type_name -> qwibi.v1.AppMarkDefinition
+	48, // [48:48] is the sub-list for method output_type
+	48, // [48:48] is the sub-list for method input_type
+	48, // [48:48] is the sub-list for extension type_name
+	48, // [48:48] is the sub-list for extension extendee
+	0,  // [0:48] is the sub-list for field type_name
 }
 
 func init() { file_qwibi_v1_app_release_proto_init() }
@@ -3249,7 +3396,7 @@ func file_qwibi_v1_app_release_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_qwibi_v1_app_release_proto_rawDesc), len(file_qwibi_v1_app_release_proto_rawDesc)),
 			NumEnums:      16,
-			NumMessages:   24,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
